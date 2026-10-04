@@ -54,7 +54,7 @@ export default function Footer() {
         <div>
           <h3 className="font-display text-lg mb-4">Contact & Social</h3>
           <div className="space-y-2.5 text-sm text-[#b7cad4]">
-            {phone && <a href={`tel:${phone.replace(/[^+\\d]/g, '')}`} className="flex items-center gap-2 hover:text-[#5f8aa1]"><Phone className="h-4 w-4" /> {phone}</a>}
+            {phone && <a href={`tel:${phone.replace(/[^+\d]/g, '')}`} className="flex items-center gap-2 hover:text-[#5f8aa1]"><Phone className="h-4 w-4" /> {phone}</a>}
             {email && <a href={`mailto:${email}`} className="flex items-center gap-2 break-all hover:text-[#5f8aa1]"><Mail className="h-4 w-4 shrink-0" /> {email}</a>}
           </div>
           <div className="mt-4 space-y-2">
