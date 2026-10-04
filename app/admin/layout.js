@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LayoutDashboard, ShoppingCart, Package, Tags, Users, Settings, LogOut, Loader2, Menu } from 'lucide-react'
+import { LayoutDashboard, ShoppingCart, Package, Tags, Users, Settings, LogOut, Loader2, Menu, Paintbrush } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
 import { BRAND } from '@/lib/site'
@@ -14,6 +14,7 @@ const NAV = [
   { label: 'Products', href: '/admin/products', icon: Package },
   { label: 'Categories', href: '/admin/categories', icon: Tags },
   { label: 'Customers', href: '/admin/customers', icon: Users },
+  { label: 'Website', href: '/admin/website', icon: Paintbrush },
   { label: 'Settings', href: '/admin/settings', icon: Settings },
 ]
 
