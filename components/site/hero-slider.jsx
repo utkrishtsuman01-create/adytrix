@@ -35,7 +35,7 @@ export default function HeroSlider({ slides = [], fallback = FALLBACK }) {
 
   return (
     <section
-      className="relative isolate min-h-[600px] overflow-hidden bg-[#1b1613] sm:min-h-[650px] lg:min-h-[700px]"
+      className="relative isolate min-h-[600px] overflow-hidden bg-[#11181f] sm:min-h-[650px] lg:min-h-[700px]"
       aria-roledescription="carousel"
       aria-label="ADYTRIX featured collection"
       onMouseEnter={() => setPaused(true)}
@@ -70,12 +70,12 @@ export default function HeroSlider({ slides = [], fallback = FALLBACK }) {
           {current.description && <p className="mt-5 max-w-2xl text-base leading-relaxed text-white/85 sm:text-lg">{current.description}</p>}
           <div className="mt-8 flex flex-wrap gap-3">
             {current.buttonText && (
-              <Button asChild size="lg" className="h-12 bg-white px-7 text-base text-[#1b1613] hover:bg-[#f5e7c7]">
+              <Button asChild size="lg" className="h-12 bg-white px-7 text-base text-[#11181f] hover:bg-[#d7eaf3]">
                 <Link href={current.buttonHref || '/shop'}>{current.buttonText} <ArrowRight className="ml-2 h-4 w-4" /></Link>
               </Button>
             )}
             {current.secondaryText && (
-              <Button asChild size="lg" variant="outline" className="h-12 border-white/60 bg-black/10 px-7 text-base text-white hover:bg-white hover:text-[#1b1613]">
+              <Button asChild size="lg" variant="outline" className="h-12 border-white/60 bg-black/10 px-7 text-base text-white hover:bg-white hover:text-[#11181f]">
                 <Link href={current.secondaryHref || '/categories'}>{current.secondaryText}</Link>
               </Button>
             )}
