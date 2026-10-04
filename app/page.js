@@ -3,7 +3,8 @@ import { ArrowRight, Truck, ShieldCheck, Sparkles, Heart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import ProductCard from '@/components/site/product-card'
 import { getFeaturedProducts, getTrendingProducts, getActiveCategories } from '@/lib/data'
-import { HANGING1, CRAFT1, TORAN1, GARLAND1 } from '@/lib/assets'
+import { HANGING1, CRAFT1, TORAN1, GARLAND1, HANGING2 } from '@/lib/assets'
+import HeroSlider from '@/components/site/hero-slider'
 import { SOCIAL } from '@/lib/site'
 
 export const dynamic = 'force-dynamic'
@@ -18,38 +19,30 @@ export default async function HomePage() {
   return (
     <div>
       {/* HERO */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-[#faf4e9] to-background">
-        <div className="container grid lg:grid-cols-2 gap-10 lg:gap-16 items-center py-14 lg:py-24">
-          <div className="animate-fade-up max-w-xl">
-            <span className="inline-flex items-center gap-2 rounded-full bg-[#f0e4cc] px-4 py-1.5 text-xs font-medium tracking-wide text-[#8A6420]">
-              <Sparkles className="h-3.5 w-3.5" /> Handcrafted festive & lifestyle decor
-            </span>
-            <h1 className="mt-5 font-display text-4xl sm:text-5xl lg:text-6xl leading-[1.05] text-foreground">
-              Where Tradition<br />Meets Beauty
-            </h1>
-            <p className="mt-5 text-base sm:text-lg text-muted-foreground leading-relaxed">
-              Discover ADYTRIX — premium artificial flowers, festive torans, decorative hangings, brass-finish bells and more, crafted to bring warmth and elegance to every corner of your home.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Button asChild size="lg" className="h-12 px-7 text-base">
-                <Link href="/shop">Shop Now <ArrowRight className="ml-2 h-4 w-4" /></Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="h-12 px-7 text-base">
-                <Link href="/categories">Explore Collection</Link>
-              </Button>
-            </div>
-            <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm text-muted-foreground">
-              <span className="flex items-center gap-2"><Truck className="h-4 w-4 text-[#B8862F]" /> Free shipping over ₹999</span>
-              <span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-[#B8862F]" /> Secure checkout</span>
-              <span className="flex items-center gap-2"><Heart className="h-4 w-4 text-[#B8862F]" /> Handmade with care</span>
-            </div>
-          </div>
-          <div className="relative animate-fade-up">
-            <div className="absolute -inset-4 rounded-[2rem] bg-[#efe2c6]/50 blur-2xl" aria-hidden="true" />
-            <img src={HANGING1} alt="ADYTRIX lotus flower hangings with brass bells decorating a festive pooja space" className="relative w-full rounded-2xl object-cover shadow-xl aspect-[4/3]" />
-          </div>
+      <HeroSlider slides={[HANGING1, TORAN1, GARLAND1, HANGING2]}>
+        <span className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-1.5 text-xs font-medium tracking-wide text-white backdrop-blur-sm">
+          <Sparkles className="h-3.5 w-3.5" /> Handcrafted festive & lifestyle decor
+        </span>
+        <h1 className="mt-5 font-display text-4xl leading-[1.05] text-white sm:text-5xl lg:text-6xl">
+          Where Tradition<br />Meets Beauty
+        </h1>
+        <p className="mt-5 max-w-2xl text-base leading-relaxed text-white/85 sm:text-lg">
+          Discover ADYTRIX — premium artificial flowers, festive torans, decorative hangings, brass-finish bells and more, crafted to bring warmth and elegance to every corner of your home.
+        </p>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Button asChild size="lg" className="h-12 bg-white px-7 text-base text-[#1b1613] hover:bg-[#f5e7c7]">
+            <Link href="/shop">Shop Now <ArrowRight className="ml-2 h-4 w-4" /></Link>
+          </Button>
+          <Button asChild size="lg" variant="outline" className="h-12 border-white/60 bg-black/10 px-7 text-base text-white hover:bg-white hover:text-[#1b1613]">
+            <Link href="/categories">Explore Collection</Link>
+          </Button>
         </div>
-      </section>
+        <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm text-white/85">
+          <span className="flex items-center gap-2"><Truck className="h-4 w-4 text-[#f0d79a]" /> Free shipping over ₹999</span>
+          <span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-[#f0d79a]" /> Secure checkout</span>
+          <span className="flex items-center gap-2"><Heart className="h-4 w-4 text-[#f0d79a]" /> Handmade with care</span>
+        </div>
+      </HeroSlider>
 
       {/* FEATURED */}
       <section className="container py-16">
