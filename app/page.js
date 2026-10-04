@@ -27,6 +27,8 @@ export default async function HomePage() {
       {sections.map((section) => (
         <HomeSection key={section.id} section={section} featured={featured} trending={trending} categories={categories} />
       ))}
+
+      <ContactStrip phone={site.footer?.phone} email={site.footer?.email} />
     </div>
   )
 }
@@ -188,4 +190,39 @@ function SectionHeading({ eyebrow, title, href, linkLabel }) {
 
 function Empty({ message }) {
   return <div className="rounded-xl border border-dashed border-border py-16 text-center text-muted-foreground">{message}</div>
+}
+
+
+function ContactStrip({ phone, email }) {
+  const hasPhone = Boolean(phone)
+  const hasEmail = Boolean(email)
+  if (!hasPhone && !hasEmail) return null
+
+  return (
+    <section className="border-t border-border bg-[#faf4e9] py-12">
+      <div className="container">
+        <div className="rounded-2xl border border-[#eadfc9] bg-white p-6 sm:p-8">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <span className="text-xs uppercase tracking-[0.3em] text-[#B8862F]">Need help?</span>
+              <h2 className="mt-2 font-display text-2xl sm:text-3xl">Talk to ADYTRIX</h2>
+              <p className="mt-2 text-sm text-muted-foreground">For product questions, orders and support, contact us directly.</p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {hasPhone && (
+                <a href={`tel:${phone.replace(/[^+\d]/g, '')}`} className="inline-flex h-11 items-center justify-center rounded-lg bg-[#1b1613] px-5 text-sm font-medium text-white transition hover:bg-[#B8862F]">
+                  Call {phone}
+                </a>
+              )}
+              {hasEmail && (
+                <a href={`mailto:${email}`} className="inline-flex h-11 items-center justify-center rounded-lg border border-[#1b1613] px-5 text-sm font-medium text-[#1b1613] transition hover:bg-[#1b1613] hover:text-white">
+                  Email {email}
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
 }
