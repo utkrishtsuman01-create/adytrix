@@ -82,7 +82,13 @@ export default function Header() {
             </Sheet>
           </div>
 
-          <div className="w-28 shrink-0 sm:w-36" aria-hidden="true" />
+          <Link href="/" className="flex h-20 w-24 shrink-0 items-center justify-start sm:h-24 sm:w-28" aria-label="ADYTRIX home">
+            <img
+              src="/adytrix-logo.jpg"
+              alt="ADYTRIX — Where Tradition Meets Beauty"
+              className="h-20 w-20 object-contain sm:h-24 sm:w-24"
+            />
+          </Link>
 
           <nav className="hidden lg:flex items-center gap-8">
             {NAV.map((n) => (
