@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight, Circle } from 'lucide-react'
 
-export default function HeroSlider({ slides, children }) {
+export default function HeroSlider({ slides = [], children }) {
   const [active, setActive] = useState(0)
   const [paused, setPaused] = useState(false)
 
@@ -18,8 +18,6 @@ export default function HeroSlider({ slides, children }) {
   const previous = () => setActive((current) => (current - 1 + slides.length) % slides.length)
   const next = () => setActive((current) => (current + 1) % slides.length)
 
-  if (!slides.length) return null
-
   return (
     <section
       className="relative isolate min-h-[620px] overflow-hidden bg-[#1b1613] sm:min-h-[680px] lg:min-h-[720px]"
@@ -30,7 +28,7 @@ export default function HeroSlider({ slides, children }) {
       onFocusCapture={() => setPaused(true)}
       onBlurCapture={() => setPaused(false)}
     >
-      {slides.map((src, index) => (
+      {slides.length > 0 && slides.map((src, index) => (
         <img
           key={src}
           src={src}
@@ -42,8 +40,12 @@ export default function HeroSlider({ slides, children }) {
         />
       ))}
 
-      <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-black/15" aria-hidden="true" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(214,174,92,0.18),transparent_32%)]" aria-hidden="true" />
+      {slides.length > 0 && (
+        <>
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-black/15" aria-hidden="true" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(214,174,92,0.18),transparent_32%)]" aria-hidden="true" />
+        </>
+      )}
 
       <div className="container relative z-10 flex min-h-[620px] items-center py-16 sm:min-h-[680px] lg:min-h-[720px]">
         <div className="max-w-2xl">
