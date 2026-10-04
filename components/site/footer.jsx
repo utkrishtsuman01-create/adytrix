@@ -52,9 +52,15 @@ export default function Footer() {
           </ul>
         </div>
         <div>
-          <h3 className="font-display text-lg mb-4">Stay Connected</h3>
-          <p className="text-sm text-[#c9bca5] mb-3">{description}</p>
-          <a href={instagram} target="_blank" rel="noopener noreferrer" className="inline-block text-sm font-medium text-[#B8862F] hover:underline">@ady_trix on Instagram →</a>
+          <h3 className="font-display text-lg mb-4">Contact & Social</h3>
+          <div className="space-y-2.5 text-sm text-[#c9bca5]">
+            {phone && <a href={`tel:${phone.replace(/[^+\\d]/g, '')}`} className="flex items-center gap-2 hover:text-[#B8862F]"><Phone className="h-4 w-4" /> {phone}</a>}
+            {email && <a href={`mailto:${email}`} className="flex items-center gap-2 break-all hover:text-[#B8862F]"><Mail className="h-4 w-4 shrink-0" /> {email}</a>}
+          </div>
+          <div className="mt-4 space-y-2">
+            <a href={instagram} target="_blank" rel="noopener noreferrer" className="block text-sm font-medium text-[#B8862F] hover:underline">Instagram →</a>
+            <a href={facebook} target="_blank" rel="noopener noreferrer" className="block text-sm font-medium text-[#B8862F] hover:underline">Facebook →</a>
+          </div>
         </div>
       </div>
       <div className="border-t border-[#2b241e]">
