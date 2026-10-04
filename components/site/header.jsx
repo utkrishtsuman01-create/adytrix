@@ -19,9 +19,16 @@ export default function Header() {
   const [q, setQ] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [site, setSite] = useState(null)
 
   useEffect(() => {
-    fetch('/api/auth/me').then((r) => r.json()).then((d) => setUser(d.user)).catch(() => {})
+    Promise.all([
+      fetch('/api/auth/me').then((r) => r.json()),
+      fetch('/api/site-config').then((r) => r.json()),
+    ]).then(([authData, siteData]) => {
+      setUser(authData.user)
+      if (siteData?.header) setSite(siteData)
+    }).catch(() => {})
   }, [])
 
   if (pathname && pathname.startsWith('/admin')) return null
@@ -43,9 +50,11 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full">
-      <div className="bg-[#1f1a16] text-[#f4ead6] text-center text-xs sm:text-sm py-2 px-4 tracking-wide">
-        Handcrafted with love · Free shipping on orders over ₹999
-      </div>
+      {site?.announcement?.enabled !== false && (
+        <div className="bg-[#1f1a16] text-[#f4ead6] text-center text-xs sm:text-sm py-2 px-4 tracking-wide">
+          {site?.announcement?.text || 'Handcrafted with love · Free shipping on orders over ₹999'}
+        </div>
+      )}
 
       <div className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="container flex h-20 items-center justify-between gap-4">
@@ -60,7 +69,7 @@ export default function Header() {
                   <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search products..." />
                 </form>
                 <nav className="flex flex-col gap-1">
-                  {NAV.map((n) => (
+                  {(site?.header?.navItems || NAV).map((n) => (
                     <Link key={n.href} href={n.href} onClick={() => setMobileOpen(false)} className="py-3 text-base font-medium border-b border-border/60">{n.label}</Link>
                   ))}
                 </nav>
@@ -84,14 +93,14 @@ export default function Header() {
 
           <Link href="/" className="flex h-20 w-24 shrink-0 items-center justify-start" aria-label="ADYTRIX home">
             <img
-              src="/adytrix-logo.jpg"
+              src={site?.header?.logoUrl || "/adytrix-logo.jpg"}
               alt="ADYTRIX — Where Tradition Meets Beauty"
               className="h-16 w-16 object-contain sm:h-[72px] sm:w-[72px]"
             />
           </Link>
 
           <nav className="hidden lg:flex items-center gap-8">
-            {NAV.map((n) => (
+            {(site?.header?.navItems || NAV).map((n) => (
               <Link key={n.href} href={n.href} className="text-sm font-medium text-foreground/80 hover:text-[#B8862F] transition-colors">{n.label}</Link>
             ))}
           </nav>
