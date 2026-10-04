@@ -14,22 +14,22 @@ export default function ProductCard({ product }) {
 
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 hover:shadow-[0_12px_40px_-12px_rgba(60,45,25,0.25)] hover:-translate-y-0.5">
-      <Link href={`/products/${product.slug}`} className="relative block aspect-square overflow-hidden bg-[#f3ece0]">
+      <Link href={`/products/${product.slug}`} className="relative block aspect-square overflow-hidden bg-[#e7f0f4]">
         {img ? (
           <img src={img} alt={product.name} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
         ) : (
           <div className="flex h-full items-center justify-center text-muted-foreground text-sm">No image</div>
         )}
         {pct > 0 && (
-          <span className="absolute left-3 top-3 rounded-full bg-[#B8862F] px-2.5 py-1 text-[11px] font-semibold text-white">{pct}% OFF</span>
+          <span className="absolute left-3 top-3 rounded-full bg-[#5f8aa1] px-2.5 py-1 text-[11px] font-semibold text-white">{pct}% OFF</span>
         )}
         {product.trending && (
-          <span className="absolute right-3 top-3 rounded-full bg-[#1f1a16] px-2.5 py-1 text-[11px] font-medium text-[#f4ead6]">Trending</span>
+          <span className="absolute right-3 top-3 rounded-full bg-[#11181f] px-2.5 py-1 text-[11px] font-medium text-[#f2f8fb]">Trending</span>
         )}
       </Link>
       <div className="flex flex-1 flex-col p-4">
         {product.categoryName && <span className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">{product.categoryName}</span>}
-        <Link href={`/products/${product.slug}`} className="font-medium text-sm sm:text-[15px] leading-snug line-clamp-2 hover:text-[#B8862F] transition-colors">{product.name}</Link>
+        <Link href={`/products/${product.slug}`} className="font-medium text-sm sm:text-[15px] leading-snug line-clamp-2 hover:text-[#5f8aa1] transition-colors">{product.name}</Link>
         <div className="mt-2 flex items-baseline gap-2">
           <span className="text-lg font-semibold text-foreground">{inr(product.discountedPrice)}</span>
           {product.mrp > product.discountedPrice && <span className="text-sm text-muted-foreground line-through">{inr(product.mrp)}</span>}
