@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
+import Razorpay from 'razorpay'
 import { v4 as uuidv4 } from 'uuid'
 import { getDb } from '@/lib/mongo'
 import { ensureSeed } from '@/lib/seed'
@@ -8,6 +9,16 @@ import {
 } from '@/lib/auth'
 import { slugify } from '@/lib/format'
 import { rateLimit } from '@/lib/ratelimit'
+
+export const runtime = 'nodejs'
+
+let razorpayClient = null
+function getRazorpay() {
+  if (!razorpayClient && process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+    razorpayClient = new Razorpay({ key_id: process.env.RAZORPAY_KEY_ID, key_secret: process.env.RAZORPAY_KEY_SECRET })
+  }
+  return razorpayClient
+}
 
 function cors(res) {
   res.headers.set('Access-Control-Allow-Origin', process.env.CORS_ORIGINS || '*')
@@ -84,7 +95,8 @@ async function handleRoute(request, { params }) {
     const db = await getDb()
     const auth = getAuth(request)
     const contentType = request.headers.get('content-type') || ''
-    const body = (method !== 'GET' && method !== 'DELETE' && contentType.includes('application/json'))
+    const isWebhook = route === '/payment/webhook'
+    const body = (!isWebhook && method !== 'GET' && method !== 'DELETE' && contentType.includes('application/json'))
       ? await request.json().catch(() => ({}))
       : {}
     const url = new URL(request.url)
@@ -233,7 +245,7 @@ async function handleRoute(request, { params }) {
       const addr = body.deliveryAddress || {}
       const required = ['name', 'phone', 'email', 'address', 'city', 'state', 'postalCode']
       for (const f of required) if (!String(addr[f] || '').trim()) return err(`Missing delivery field: ${f}`)
-      const method_ = body.paymentMethod === 'cod' ? 'cod' : 'razorpay_link'
+      const method_ = body.paymentMethod === 'cod' ? 'cod' : 'razorpay'
       const priced = await recomputeItems(db, body.items)
       if (priced.error) return err(priced.error)
       const now = new Date()
@@ -278,6 +290,79 @@ async function handleRoute(request, { params }) {
       const history = await db.collection('order_status_history').find({ orderId: id }).sort({ timestamp: 1 }).toArray()
       const { _id, ...rest } = order
       return json({ order: rest, history: history.map((h) => { const { _id, ...r } = h; return r }) })
+    }
+
+    // ---------------- PAYMENTS (Razorpay, server-verified) ----------------
+    if (route === '/payment/order' && method === 'POST') {
+      if (!auth) return err('Unauthorized', 401)
+      const rp = getRazorpay()
+      if (!rp) return err('Payment gateway not configured', 503)
+      const order = await db.collection('orders').findOne({ id: body.orderId })
+      if (!order) return err('Order not found', 404)
+      if (order.userId !== auth.uid) return err('Forbidden', 403)
+      if (order.paymentStatus === 'paid') return err('Order already paid', 409)
+      const amount = Math.round(Number(order.total) * 100)
+      if (order.razorpayOrderId) {
+        return json({ orderId: order.razorpayOrderId, amount, currency: 'INR', keyId: process.env.RAZORPAY_KEY_ID })
+      }
+      const rzOrder = await rp.orders.create({ amount, currency: 'INR', receipt: order.orderNumber, notes: { orderId: order.id } })
+      await db.collection('orders').updateOne({ id: order.id }, { $set: { razorpayOrderId: rzOrder.id, updatedAt: new Date() } })
+      await db.collection('payments').insertOne({ id: uuidv4(), orderId: order.id, provider: 'razorpay', providerOrderId: rzOrder.id, providerPaymentId: null, amount: order.total, status: 'created', createdAt: new Date(), updatedAt: new Date() })
+      return json({ orderId: rzOrder.id, amount, currency: 'INR', keyId: process.env.RAZORPAY_KEY_ID })
+    }
+
+    if (route === '/payment/verify' && method === 'POST') {
+      if (!auth) return err('Unauthorized', 401)
+      const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = body
+      if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) return err('Incomplete payment response')
+      const order = await db.collection('orders').findOne({ razorpayOrderId: razorpay_order_id })
+      if (!order) return err('Unknown order', 404)
+      if (order.userId !== auth.uid && auth.role !== 'admin') return err('Forbidden', 403)
+      if (order.paymentStatus === 'paid' && order.paymentReference === razorpay_payment_id) return json({ verified: true, alreadyProcessed: true, orderId: order.id })
+      const expected = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET).update(`${razorpay_order_id}|${razorpay_payment_id}`).digest('hex')
+      const a = Buffer.from(expected)
+      const b = Buffer.from(String(razorpay_signature))
+      if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return err('Invalid signature', 400)
+      try {
+        const rp = getRazorpay()
+        const payment = await rp.payments.fetch(razorpay_payment_id)
+        if (payment.order_id !== razorpay_order_id || !['authorized', 'captured'].includes(payment.status)) {
+          return err('Payment/order mismatch or not authorized', 400)
+        }
+      } catch (e) { /* fetch is a best-effort confirmation */ }
+      const result = await db.collection('orders').updateOne(
+        { id: order.id, paymentStatus: { $ne: 'paid' } },
+        { $set: { paymentStatus: 'paid', paymentReference: razorpay_payment_id, updatedAt: new Date() } },
+      )
+      await db.collection('payments').updateOne({ providerOrderId: razorpay_order_id }, { $set: { providerPaymentId: razorpay_payment_id, status: 'paid', updatedAt: new Date() } })
+      if (result.modifiedCount > 0) {
+        await db.collection('order_status_history').insertOne({ id: uuidv4(), orderId: order.id, status: 'payment_confirmed', changedBy: order.userId, timestamp: new Date() })
+        await audit(db, order.userId, 'payment_confirmed', 'order', order.id, { paymentId: razorpay_payment_id })
+      }
+      return json({ verified: true, alreadyProcessed: result.modifiedCount === 0, orderId: order.id })
+    }
+
+    if (isWebhook && method === 'POST') {
+      const secret = process.env.RAZORPAY_WEBHOOK_SECRET
+      const raw = await request.text()
+      if (!secret) return json({ received: true })
+      const received = request.headers.get('x-razorpay-signature') || ''
+      const expected = crypto.createHmac('sha256', secret).update(raw).digest('hex')
+      const a = Buffer.from(expected)
+      const b = Buffer.from(received)
+      if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return err('Invalid webhook signature', 400)
+      const event = JSON.parse(raw)
+      if (event.event === 'payment.captured' || event.event === 'payment.authorized') {
+        const p = event.payload?.payment?.entity
+        if (p?.id && p?.order_id) {
+          await db.collection('orders').updateOne(
+            { razorpayOrderId: p.order_id, paymentStatus: { $ne: 'paid' } },
+            { $set: { paymentStatus: 'paid', paymentReference: p.id, updatedAt: new Date() } },
+          )
+          await db.collection('payments').updateOne({ providerOrderId: p.order_id }, { $set: { providerPaymentId: p.id, status: 'paid', updatedAt: new Date() } })
+        }
+      }
+      return json({ received: true })
     }
 
     // ================= ADMIN =================

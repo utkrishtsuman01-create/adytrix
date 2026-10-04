@@ -1,14 +1,15 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Loader2, Check, Clock, Truck, PackageCheck, XCircle, ExternalLink } from 'lucide-react'
+import { Loader2, Check, Clock, Truck, PackageCheck, XCircle, CreditCard } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import Breadcrumbs from '@/components/site/breadcrumbs'
+import { startRazorpayPayment } from '@/lib/razorpay-client'
 import { inr } from '@/lib/format'
 
-const RZP_LINK = process.env.NEXT_PUBLIC_RAZORPAY_LINK || 'https://razorpay.me/@adityabanik'
 const STEPS = [
   { key: 'pending', label: 'Order Placed', icon: Clock },
   { key: 'accepted', label: 'Accepted', icon: Check },
@@ -21,14 +22,27 @@ export default function OrderDetailPage() {
   const params = useParams()
   const id = params?.id
   const [order, setOrder] = useState(undefined)
+  const [paying, setPaying] = useState(false)
 
-  useEffect(() => {
+  const loadOrder = useCallback(() => {
     if (!id) return
     fetch(`/api/orders/${id}`).then((r) => {
       if (r.status === 401) { router.replace(`/login?redirect=/orders/${id}`); return null }
       return r.json()
     }).then((d) => { if (d) setOrder(d.error ? null : d.order) })
   }, [id, router])
+
+  useEffect(() => { loadOrder() }, [loadOrder])
+
+  const payNow = async () => {
+    setPaying(true)
+    try {
+      const result = await startRazorpayPayment({ orderId: order.id, prefill: { name: order.deliveryAddress.name, email: order.deliveryAddress.email, phone: order.deliveryAddress.phone } })
+      if (result.status === 'paid') { toast.success('Payment successful!'); loadOrder() }
+      else if (result.status === 'dismissed') toast('Payment cancelled.')
+      else toast.error('Payment not completed.')
+    } catch (e) { toast.error(e.message || 'Could not start payment') } finally { setPaying(false) }
+  }
 
   if (order === undefined) return <div className="container py-20 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></div>
   if (order === null) return <div className="container py-20 text-center"><h1 className="font-display text-2xl">Order not found</h1><Button asChild className="mt-4"><Link href="/orders">Back to orders</Link></Button></div>
@@ -104,8 +118,8 @@ export default function OrderDetailPage() {
             <p className="capitalize">Payment: <span className="font-medium">{order.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Razorpay'}</span></p>
             <p className="capitalize">Status: <span className="font-medium">{order.paymentStatus}</span></p>
           </div>
-          {order.paymentMethod === 'razorpay_link' && order.paymentStatus === 'pending' && (
-            <Button asChild className="w-full mt-4"><a href={RZP_LINK} target="_blank" rel="noopener noreferrer">Pay {inr(order.total)} <ExternalLink className="ml-2 h-4 w-4" /></a></Button>
+          {order.paymentMethod === 'razorpay' && order.paymentStatus === 'pending' && (
+            <Button onClick={payNow} disabled={paying} className="w-full mt-4">{paying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />} Pay {inr(order.total)}</Button>
           )}
         </section>
       </div>

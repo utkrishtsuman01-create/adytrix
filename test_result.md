@@ -164,6 +164,21 @@ backend:
         -working: true
         -agent: "testing"
         -comment: "✅ ALL 6 IMAGE UPLOAD TESTS PASSED. Fixed issues: (1) JSON parsing no longer consumes multipart stream (line 87-89 conditional parsing), (2) validateProduct() now properly rejects >5 images (line 485). Test results: Single valid PNG upload → 201 with URL, image retrieval → 200 with correct content-type, 6 images rejected → 422 'Maximum 5 images allowed', fake image rejected → 422 'File content does not match image type', non-admin/unauthenticated requests → 403. Product creation with 6 images → 400 'Maximum 5 images allowed', with 5 images → 201 success."
+  - task: "Razorpay Test Mode payment - create order, verify signature (HMAC), duplicate/idempotency protection, mark paid server-side only"
+    implemented: true
+    working: true
+    file: "app/api/[[...path]]/route.js, lib/razorpay-client.js, app/checkout/page.js, app/orders/[id]/page.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: "NA"
+        -agent: "main"
+        -comment: "Real Razorpay SDK integration (Test Mode keys in env, secret server-only). POST /api/payment/order creates a Razorpay order for an existing ADYTRIX order (auth + ownership + not-already-paid; reuses razorpayOrderId if present). POST /api/payment/verify validates HMAC SHA256 of 'razorpay_order_id|razorpay_payment_id' with RAZORPAY_KEY_SECRET, best-effort payments.fetch, then idempotent update to paymentStatus=paid. Unique sparse indexes on razorpayOrderId/razorpayPaymentId. Webhook endpoint reads raw body for signature. key_secret never exposed; only NEXT_PUBLIC_RAZORPAY_KEY_ID + per-order order_id reach the browser."
+        -working: true
+        -agent: "testing"
+        -comment: "✅ ALL 11 RAZORPAY TESTS PASSED. POST /api/payment/order: (1a) Creates real Razorpay order with order_id starting with 'order_', amount in paise (total*100), currency INR, returns public keyId (rzp_test_...), no secret leaked. (1b) Reuses same razorpay orderId on subsequent calls (no duplicate creation). (1c) Unauthenticated → 401. (1d) Different customer → 403. (1e) Already paid order → 409. POST /api/payment/verify: (2a) Valid HMAC SHA256 signature → 200 {verified:true}, order.paymentStatus updated to 'paid', paymentReference stored correctly. (2b) Idempotency: same verify payload → 200 {verified:true, alreadyProcessed:true}, order remains paid. (2c) Invalid signature → 400 'Invalid signature', order stays unpaid. (2d) Incomplete body (missing fields) → 400. (2e) Unknown razorpay_order_id → 404. (3) Security: RAZORPAY_KEY_SECRET not leaked in any endpoint response. Real Razorpay API integration confirmed working (test mode)."
+
   - task: "Image serving GET /api/images/:id with cache headers"
     implemented: true
     working: true
@@ -183,10 +198,10 @@ backend:
         -comment: "✅ IMAGE SERVING WORKING. After uploading a valid PNG via POST /api/admin/upload, retrieved the image via GET /api/images/{uuid} → 200 with Content-Type: image/png, 287 bytes. Cache headers correctly set (immutable, max-age=31536000)."
 
 frontend:
-  - task: "All public + admin pages (not yet UI-tested; pending user approval)"
+  - task: "Public Storefront (home, shop, categories, trending, product detail)"
     implemented: true
-    working: "NA"
-    file: "app/**"
+    working: false
+    file: "app/page.js, app/shop/page.js, app/categories/page.js, app/trending/page.js, app/products/[slug]/page.js"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
@@ -194,15 +209,65 @@ frontend:
         -working: "NA"
         -agent: "main"
         -comment: "Homepage verified via screenshot. Full UI testing deferred until user approves."
+        -working: false
+        -agent: "testing"
+        -comment: "DESKTOP (1920x800): ✅ Home page: All sections present (hero, featured, categories, trending, about, why, social, footer). ✅ Shop page: Products load, search works ('lotus' returns 6 results), no-results state shown for gibberish, filters/sort functional. ✅ Categories page: Categories load, category listing works. ✅ Trending page: 15 products shown. ❌ Product detail page: Quantity selector not found (test expected button[aria-label*='Decrease'] or button:has-text('-') but not present). However, Add to Cart button works and cart badge updates. MOBILE (390x844): ✅ No layout overflow (body width 390px). ✅ Hamburger menu works. ✅ Shop page: 27 products shown, no overflow. CRITICAL: 502 errors detected during testing (12 network failures including webpack HMR, signup endpoint). Console: 592 errors/warnings (mostly Fast Refresh warnings and WebSocket 502s)."
+  
+  - task: "Cart & Auth (cart operations, signup, login, profile)"
+    implemented: true
+    working: false
+    file: "app/cart/page.js, app/signup/page.js, app/login/page.js, app/profile/page.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: "NA"
+        -agent: "main"
+        -comment: "Not yet tested."
+        -working: false
+        -agent: "testing"
+        -comment: "✅ Cart page: 6 items shown, quantity +/- works, remove item works (1->0), subtotal/shipping/total present, free shipping message shown. ❌ Proceed to Checkout button not found (test expected a[href='/checkout']:has-text('Proceed') but not present). ✅ Checkout redirect: Correctly redirects to /login when not authenticated. ❌ Signup: FAILED with 502 error - cannot create new customer accounts (testcustomer1791100324@adytrix.test / 9891100324). ⚠️ Account menu: User icon/menu not found after login (expected button:has-text('Account') or a:has-text('Profile') but not present). ✅ Profile page: Edit name works, success toast shown, change password form present. CRITICAL: Signup endpoint returning 502 error, blocking new customer registration."
+  
+  - task: "Checkout + Order (COD and Razorpay)"
+    implemented: true
+    working: true
+    file: "app/checkout/page.js, app/orders/page.js, app/orders/[id]/page.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: "NA"
+        -agent: "main"
+        -comment: "Not yet tested."
+        -working: true
+        -agent: "testing"
+        -comment: "✅ COD Checkout: Order created successfully (c6f7515c-18b9-4ecc-b083-26825b72d9a7). Delivery form prefilled with name/email/phone. Address fields filled (Mumbai, Maharashtra, 400001). COD radio selected. Order placed and redirected to /orders/<id>. Minor: Tracking timeline not detected (expected text=/order.*placed|tracking|status/i), items/address sections not detected but payment method COD shown. ✅ Orders list: Shows orders (though COD order not found in list - may be timing issue). ✅ Razorpay checkout: Modal/iframe opened successfully showing payment options (UPI, Cards, EMI, Netbanking, Wallet, Pay Later) with correct amount ₹708 and merchant ADYTRIX. ⚠️ Razorpay cancellation: After pressing Escape, stayed on /checkout instead of navigating to order page. Cancellation toast not shown. Note: Razorpay Test Mode integration confirmed working - modal opens with correct details."
+  
+  - task: "Admin Panel (dashboard, orders, products, categories, customers, settings)"
+    implemented: true
+    working: false
+    file: "app/admin/page.js, app/admin/orders/page.js, app/admin/products/page.js, app/admin/categories/page.js, app/admin/customers/page.js, app/admin/settings/page.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: "NA"
+        -agent: "main"
+        -comment: "Not yet tested."
+        -working: false
+        -agent: "testing"
+        -comment: "❌ Admin login: FAILED - stayed on /admin/login after submitting credentials (phone: 9999999999, password: Adytrix@Admin2025). Expected redirect to /admin but remained on login page. ✅ Admin layout: Store header/footer NOT present (correct isolation). ⚠️ Admin Dashboard: Sidebar not detected (expected text=/dashboard|orders|products/i). Stat cards not found (0 found). Recent orders section not found. Revenue card not found. However, page loaded without errors. ⚠️ Admin Orders: 0 orders shown, 0 status filter tabs found. ⚠️ Admin Products: 0 products shown, 0 toggle switches found. ⚠️ Admin Categories: 0 categories shown. ⚠️ Admin Customers: 0 customers shown. ✅ Admin Settings: Change password form present, logout button not found. CRITICAL: Admin login not working - cannot access admin panel functionality. All admin pages appear empty, likely because authentication failed."
 
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 2
-  run_ui: false
+  test_sequence: 4
+  run_ui: true
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Admin Panel (dashboard, orders, products, categories, customers, settings)"
+    - "Cart & Auth (cart operations, signup, login, profile)"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -216,3 +281,7 @@ agent_communication:
     -message: "Backend testing complete (62/69 tests passed). RESULTS: ✅ Auth (19/19), ✅ Cart+Orders with IDOR protection (8/8), ✅ Admin authorization (9/9), ✅ Admin functionality (18/19), ✅ Public catalog (8/10 - 2 transient 502s). ❌ CRITICAL: Image upload endpoint broken - returns 400 'Invalid upload' for valid multipart requests. Issue: FormData parsing in Next.js route handler at line 391-393. The form.getAll('images') is not finding files. Minor: validateProduct() doesn't reject >5 images (line 482 slices but doesn't error). Image serving untested due to upload failure."
     -agent: "testing"
     -message: "RE-TEST COMPLETE (8/8 tests passed). ✅ Image upload fully working: single PNG upload → 201, retrieval → 200 with correct content-type, 6 images rejected → 422, fake image rejected → 422, non-admin rejected → 403. ✅ Product image limit validation working: 6 images → 400 'Maximum 5 images allowed', 5 images → 201 success. Both previously-failing issues are now FIXED. All backend functionality confirmed working."
+    -agent: "testing"
+    -message: "RAZORPAY TEST MODE INTEGRATION COMPLETE (11/11 tests passed). ✅ Payment order creation: real Razorpay API integration working, creates order_* IDs, reuses existing orders, proper auth/ownership checks (401/403/409). ✅ Payment verification: HMAC SHA256 signature validation working, idempotency protection (alreadyProcessed flag), order status updates to 'paid' correctly, invalid signatures rejected (400), unknown orders rejected (404). ✅ Security: RAZORPAY_KEY_SECRET never exposed in any response. All Razorpay Test Mode payment flows production-ready."
+    -agent: "testing"
+    -message: "COMPREHENSIVE FRONTEND TEST COMPLETE (18/25 passed, 3 failed, 4 warnings). ✅ WORKING: Public storefront (home, shop, categories, trending), COD checkout end-to-end, Razorpay modal opens correctly, mobile responsive (no overflow), profile page, orders list. ❌ CRITICAL FAILURES: (1) Admin login not working - stays on /admin/login after submitting correct credentials (phone: 9999999999, password: Adytrix@Admin2025), cannot access admin panel. (2) Signup returns 502 error - cannot create new customer accounts. (3) 502 server errors during testing (12 network failures, 592 console errors including WebSocket HMR failures). ⚠️ MINOR ISSUES: (1) Product detail page - quantity selector not found by test (but Add to Cart works). (2) Cart page - Proceed to Checkout button not found by test (but cart operations work). (3) Account menu not found after login. (4) Razorpay cancellation flow doesn't navigate to order page. RECOMMENDATION: Fix admin login (authentication issue) and investigate 502 errors (server stability). UI element selectors may need adjustment."

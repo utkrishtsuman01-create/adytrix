@@ -3,23 +3,22 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Loader2, Lock, CreditCard, Banknote, ExternalLink } from 'lucide-react'
+import { Loader2, Lock, CreditCard, Banknote, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { useCart } from '@/components/site/cart'
+import { startRazorpayPayment } from '@/lib/razorpay-client'
 import { inr } from '@/lib/format'
-
-const RZP_LINK = process.env.NEXT_PUBLIC_RAZORPAY_LINK || 'https://razorpay.me/@adityabanik'
 
 export default function CheckoutPage() {
   const router = useRouter()
   const { items, subtotal, clear, ready } = useCart()
   const [user, setUser] = useState(undefined)
   const [placing, setPlacing] = useState(false)
-  const [method, setMethod] = useState('razorpay_link')
+  const [method, setMethod] = useState('razorpay')
   const [form, setForm] = useState({ name: '', phone: '', email: '', address: '', city: '', state: '', postalCode: '', country: 'India' })
 
   useEffect(() => {
@@ -46,13 +45,20 @@ export default function CheckoutPage() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Could not create order')
       clear()
-      if (method === 'razorpay_link') {
-        window.open(RZP_LINK, '_blank', 'noopener')
-        toast.success('Order placed!', { description: 'Complete payment via Razorpay. We will confirm your order shortly.' })
+      const created = data.order
+      if (method === 'razorpay') {
+        try {
+          const result = await startRazorpayPayment({ orderId: created.id, prefill: { name: form.name, email: form.email, phone: form.phone } })
+          if (result.status === 'paid') toast.success('Payment successful! Order confirmed.')
+          else if (result.status === 'dismissed') toast('Payment cancelled — you can pay later from My Orders.')
+          else toast.error('Payment not completed. You can retry from My Orders.')
+        } catch (e) {
+          toast.error(e.message || 'Could not start payment')
+        }
       } else {
         toast.success('Order placed!', { description: 'Your order has been received.' })
       }
-      router.push(`/orders/${data.order.id}`)
+      router.push(`/orders/${created.id}`)
     } catch (err) {
       toast.error(err.message)
     } finally {
@@ -88,8 +94,8 @@ export default function CheckoutPage() {
             <h2 className="font-display text-xl mb-5">Payment Method</h2>
             <RadioGroup value={method} onValueChange={setMethod} className="space-y-3">
               <label className="flex items-start gap-3 rounded-lg border border-border p-4 cursor-pointer hover:bg-muted/50">
-                <RadioGroupItem value="razorpay_link" id="rzp" className="mt-0.5" />
-                <div><div className="flex items-center gap-2 font-medium"><CreditCard className="h-4 w-4 text-[#B8862F]" /> Pay Online (Razorpay)</div><p className="text-sm text-muted-foreground mt-1">Pay securely via Razorpay. Your order is confirmed once payment is verified by our team.</p></div>
+                <RadioGroupItem value="razorpay" id="rzp" className="mt-0.5" />
+                <div><div className="flex items-center gap-2 font-medium"><CreditCard className="h-4 w-4 text-[#B8862F]" /> Pay Online (Razorpay · Test Mode)</div><p className="text-sm text-muted-foreground mt-1">Secure card / UPI / netbanking payment via Razorpay. Your order is confirmed after payment is verified on our server.</p></div>
               </label>
               <label className="flex items-start gap-3 rounded-lg border border-border p-4 cursor-pointer hover:bg-muted/50">
                 <RadioGroupItem value="cod" id="cod" className="mt-0.5" />
@@ -119,7 +125,7 @@ export default function CheckoutPage() {
             <Button type="submit" size="lg" className="w-full mt-5" disabled={placing}>
               {placing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Placing order...</> : <><Lock className="mr-2 h-4 w-4" /> Place Order</>}
             </Button>
-            {method === 'razorpay_link' && <p className="mt-3 flex items-center gap-1 text-xs text-muted-foreground"><ExternalLink className="h-3 w-3" /> Razorpay payment page opens after placing the order.</p>}
+            {method === 'razorpay' && <p className="mt-3 flex items-center gap-1 text-xs text-muted-foreground"><ShieldCheck className="h-3 w-3" /> Secure Razorpay payment opens after you place the order.</p>}
           </div>
         </div>
       </form>
