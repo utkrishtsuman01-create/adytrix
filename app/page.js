@@ -22,7 +22,7 @@ export default async function HomePage() {
 
   return (
     <div>
-      {site.hero?.enabled !== false && <HeroSlider slides={site.hero?.slides || []} />}
+      {site.hero?.enabled !== false && <HeroSlider slides={site.hero?.slides || []} phone={site.footer?.phone} email={site.footer?.email} />}
 
       {sections.map((section) => (
         <HomeSection key={section.id} section={section} featured={featured} trending={trending} categories={categories} />
