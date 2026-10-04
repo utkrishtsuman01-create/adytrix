@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { Facebook, Instagram, Mail } from 'lucide-react'
+import { Facebook, Instagram, Mail, Phone } from 'lucide-react'
 import { NAV, POLICIES, SOCIAL, BRAND, TAGLINE } from '@/lib/site'
 import { LOGO } from '@/lib/assets'
 
@@ -15,6 +15,8 @@ export default function Footer() {
   const nav = site?.header?.navItems || NAV
   const instagram = site?.footer?.instagram || SOCIAL.instagram
   const facebook = site?.footer?.facebook || SOCIAL.facebook
+  const phone = site?.footer?.phone || ''
+  const email = site?.footer?.email || ''
   const logo = site?.header?.logoUrl || LOGO
   const tagline = site?.footer?.tagline || TAGLINE
   const description = site?.footer?.description || 'Premium handcrafted decor and lifestyle products — artificial flowers, festive torans, hangings, bells, handbags and shirts.'
