@@ -95,11 +95,11 @@ export default function CheckoutPage() {
             <RadioGroup value={method} onValueChange={setMethod} className="space-y-3">
               <label className="flex items-start gap-3 rounded-lg border border-border p-4 cursor-pointer hover:bg-muted/50">
                 <RadioGroupItem value="razorpay" id="rzp" className="mt-0.5" />
-                <div><div className="flex items-center gap-2 font-medium"><CreditCard className="h-4 w-4 text-[#B8862F]" /> Pay Online (Razorpay · Test Mode)</div><p className="text-sm text-muted-foreground mt-1">Secure card / UPI / netbanking payment via Razorpay. Your order is confirmed after payment is verified on our server.</p></div>
+                <div><div className="flex items-center gap-2 font-medium"><CreditCard className="h-4 w-4 text-[#5f8aa1]" /> Pay Online (Razorpay · Test Mode)</div><p className="text-sm text-muted-foreground mt-1">Secure card / UPI / netbanking payment via Razorpay. Your order is confirmed after payment is verified on our server.</p></div>
               </label>
               <label className="flex items-start gap-3 rounded-lg border border-border p-4 cursor-pointer hover:bg-muted/50">
                 <RadioGroupItem value="cod" id="cod" className="mt-0.5" />
-                <div><div className="flex items-center gap-2 font-medium"><Banknote className="h-4 w-4 text-[#B8862F]" /> Cash on Delivery</div><p className="text-sm text-muted-foreground mt-1">Pay in cash when your order is delivered.</p></div>
+                <div><div className="flex items-center gap-2 font-medium"><Banknote className="h-4 w-4 text-[#5f8aa1]" /> Cash on Delivery</div><p className="text-sm text-muted-foreground mt-1">Pay in cash when your order is delivered.</p></div>
               </label>
             </RadioGroup>
           </section>
@@ -111,7 +111,7 @@ export default function CheckoutPage() {
             <div className="space-y-3 max-h-64 overflow-auto pr-1">
               {items.map((i) => (
                 <div key={i.productId} className="flex gap-3 text-sm">
-                  <div className="h-12 w-12 shrink-0 overflow-hidden rounded bg-[#f3ece0]">{i.image ? <img src={i.image} alt={i.name} className="h-full w-full object-cover" /> : null}</div>
+                  <div className="h-12 w-12 shrink-0 overflow-hidden rounded bg-[#e7f0f4]">{i.image ? <img src={i.image} alt={i.name} className="h-full w-full object-cover" /> : null}</div>
                   <div className="flex-1"><p className="line-clamp-1">{i.name}</p><p className="text-muted-foreground">Qty {i.quantity} · {inr(i.price)}</p></div>
                   <div className="font-medium">{inr(i.price * i.quantity)}</div>
                 </div>
