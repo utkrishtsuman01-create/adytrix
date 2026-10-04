@@ -10,6 +10,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/s
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 import { useCart } from '@/components/site/cart'
 import { NAV, BRAND } from '@/lib/site'
+import { LOGO } from '@/lib/assets'
 
 export default function Header() {
   const router = useRouter()
@@ -83,8 +84,12 @@ export default function Header() {
           </div>
 
           <Link href="/" className="flex flex-col items-center lg:items-start leading-none select-none">
-            <span className="font-display text-2xl sm:text-3xl tracking-[0.25em] text-foreground">{BRAND}</span>
-            <span className="hidden sm:block text-[10px] tracking-[0.3em] uppercase text-[#B8862F] mt-0.5">Where Tradition Meets Beauty</span>
+            <img
+              src={LOGO}
+              alt={BRAND}
+              className="h-10 w-auto max-w-[150px] object-contain sm:h-12 sm:max-w-[180px]"
+            />
+            <span className="hidden sm:block text-[10px] tracking-[0.3em] uppercase text-[#B8862F] mt-1">Where Tradition Meets Beauty</span>
           </Link>
 
           <nav className="hidden lg:flex items-center gap-8">
