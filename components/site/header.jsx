@@ -51,7 +51,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full">
       {site?.announcement?.enabled !== false && (
-        <div className="bg-[#1f1a16] text-[#f4ead6] text-center text-xs sm:text-sm py-2 px-4 tracking-wide">
+        <div className="bg-[#11181f] text-[#f2f8fb] text-center text-xs sm:text-sm py-2 px-4 tracking-wide">
           {site?.announcement?.text || 'Handcrafted with love · Free shipping on orders over ₹999'}
         </div>
       )}
@@ -101,7 +101,7 @@ export default function Header() {
 
           <nav className="hidden lg:flex items-center gap-8">
             {(site?.header?.navItems || NAV).map((n) => (
-              <Link key={n.href} href={n.href} className="text-sm font-medium text-foreground/80 hover:text-[#B8862F] transition-colors">{n.label}</Link>
+              <Link key={n.href} href={n.href} className="text-sm font-medium text-foreground/80 hover:text-[#5f8aa1] transition-colors">{n.label}</Link>
             ))}
           </nav>
 
@@ -127,7 +127,7 @@ export default function Header() {
             <Link href="/cart" className="relative">
               <Button variant="ghost" size="icon" aria-label="Cart"><ShoppingBag className="h-5 w-5" /></Button>
               {count > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 h-5 min-w-5 px-1 rounded-full bg-[#B8862F] text-white text-[11px] font-semibold flex items-center justify-center">{count}</span>
+                <span className="absolute -top-0.5 -right-0.5 h-5 min-w-5 px-1 rounded-full bg-[#5f8aa1] text-white text-[11px] font-semibold flex items-center justify-center">{count}</span>
               )}
             </Link>
           </div>
