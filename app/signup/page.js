@@ -46,7 +46,7 @@ export default function SignupPage() {
           <div><Label htmlFor="password">Password</Label><Input id="password" type="password" required minLength={6} value={form.password} onChange={set('password')} className="mt-1.5" placeholder="At least 6 characters" /></div>
           <Button type="submit" size="lg" className="w-full" disabled={loading}>{loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create Account'}</Button>
         </form>
-        <p className="mt-6 text-center text-sm text-muted-foreground">Already have an account? <Link href="/login" className="font-medium text-[#B8862F] hover:underline">Sign in</Link></p>
+        <p className="mt-6 text-center text-sm text-muted-foreground">Already have an account? <Link href="/login" className="font-medium text-[#5f8aa1] hover:underline">Sign in</Link></p>
       </div>
     </div>
   )
