@@ -81,9 +81,9 @@ export default function HeroSlider({ slides = [], fallback = FALLBACK }) {
             )}
           </div>
           <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm text-white/85">
-            <span className="flex items-center gap-2"><Truck className="h-4 w-4 text-[#f0d79a]" /> Free shipping over ₹999</span>
-            <span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-[#f0d79a]" /> Secure checkout</span>
-            <span className="flex items-center gap-2"><Heart className="h-4 w-4 text-[#f0d79a]" /> Handmade with care</span>
+            <span className="flex items-center gap-2"><Truck className="h-4 w-4 text-[#b8d6e5]" /> Free shipping over ₹999</span>
+            <span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-[#b8d6e5]" /> Secure checkout</span>
+            <span className="flex items-center gap-2"><Heart className="h-4 w-4 text-[#b8d6e5]" /> Handmade with care</span>
           </div>
         </div>
       </div>
