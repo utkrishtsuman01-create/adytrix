@@ -425,6 +425,8 @@ async function handleRoute(request, { params }) {
         footer: {
           tagline: String(body.footer?.tagline || '').slice(0, 120),
           description: String(body.footer?.description || '').slice(0, 500),
+          phone: String(body.footer?.phone || '').trim().slice(0, 40),
+          email: String(body.footer?.email || '').trim().slice(0, 160),
           instagram: String(body.footer?.instagram || '').slice(0, 2000),
           facebook: String(body.footer?.facebook || '').slice(0, 2000),
         },
