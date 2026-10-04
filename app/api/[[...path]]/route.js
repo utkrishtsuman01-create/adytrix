@@ -9,6 +9,7 @@ import {
 } from '@/lib/auth'
 import { slugify } from '@/lib/format'
 import { rateLimit } from '@/lib/ratelimit'
+import { getSiteConfig, saveSiteConfig } from '@/lib/site-config'
 
 export const runtime = 'nodejs'
 
@@ -368,8 +369,70 @@ async function handleRoute(request, { params }) {
       return json({ received: true })
     }
 
+    if (route === '/site-config' && method === 'GET') {
+      const config = await getSiteConfig()
+      return json(config)
+    }
+
     // ================= ADMIN =================
     const requireAdmin = () => auth && auth.role === 'admin'
+
+    if (route === '/admin/site-config' && method === 'GET') {
+      if (!requireAdmin()) return err('Forbidden', 403)
+      return json(await getSiteConfig())
+    }
+
+    if (route === '/admin/site-config' && method === 'PUT') {
+      if (!requireAdmin()) return err('Forbidden', 403)
+      if (!body || typeof body !== 'object') return err('Invalid site configuration.')
+      const allowedTypes = new Set(['featured', 'categories', 'trending', 'story', 'promises', 'social', 'custom'])
+      const sections = Array.isArray(body.sections) ? body.sections.slice(0, 40) : []
+      for (const section of sections) {
+        if (!section || !allowedTypes.has(String(section.type || ''))) return err('Invalid website section type.')
+        section.id = String(section.id || uuidv4()).slice(0, 80)
+        section.enabled = section.enabled !== false
+      }
+      const config = {
+        announcement: {
+          enabled: body.announcement?.enabled !== false,
+          text: String(body.announcement?.text || '').slice(0, 300),
+        },
+        header: {
+          logoUrl: String(body.header?.logoUrl || '/adytrix-logo.jpg').slice(0, 2000),
+          navItems: Array.isArray(body.header?.navItems)
+            ? body.header.navItems.slice(0, 12).map((n) => ({
+                label: String(n?.label || '').trim().slice(0, 60),
+                href: String(n?.href || '/').trim().slice(0, 300),
+              })).filter((n) => n.label && n.href)
+            : [],
+        },
+        hero: {
+          enabled: body.hero?.enabled !== false,
+          overlay: body.hero?.overlay !== false,
+          slides: Array.isArray(body.hero?.slides) ? body.hero.slides.slice(0, 12).map((s) => ({
+            image: String(s?.image || '').slice(0, 3000),
+            eyebrow: String(s?.eyebrow || '').slice(0, 120),
+            title: String(s?.title || '').slice(0, 160),
+            description: String(s?.description || '').slice(0, 500),
+            buttonText: String(s?.buttonText || '').slice(0, 80),
+            buttonHref: String(s?.buttonHref || '/shop').slice(0, 300),
+            secondaryText: String(s?.secondaryText || '').slice(0, 80),
+            secondaryHref: String(s?.secondaryHref || '/categories').slice(0, 300),
+          })).filter((s) => s.image)
+            : [],
+        },
+        sections,
+        footer: {
+          tagline: String(body.footer?.tagline || '').slice(0, 120),
+          description: String(body.footer?.description || '').slice(0, 500),
+          instagram: String(body.footer?.instagram || '').slice(0, 2000),
+          facebook: String(body.footer?.facebook || '').slice(0, 2000),
+        },
+      }
+      const saved = await saveSiteConfig(config, auth.uid)
+      await audit(db, auth.uid, 'site_config_update', 'site', 'main', { sectionCount: saved.sections.length })
+      return json(saved)
+    }
 
     if (route === '/admin/stats' && method === 'GET') {
       if (!requireAdmin()) return err('Forbidden', 403)
