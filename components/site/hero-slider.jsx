@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowRight, ChevronLeft, ChevronRight, Circle, Sparkles, Truck, ShieldCheck, Heart } from 'lucide-react'
+import { ArrowRight, ChevronLeft, ChevronRight, Circle, Sparkles, Truck, ShieldCheck, Heart, Phone, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 const FALLBACK = {
@@ -15,12 +15,16 @@ const FALLBACK = {
   secondaryHref: '/categories',
 }
 
-export default function HeroSlider({ slides = [], fallback = FALLBACK }) {
+export default function HeroSlider({ slides = [], fallback = FALLBACK, phone = '', email = '' }) {
   const [active, setActive] = useState(0)
   const [paused, setPaused] = useState(false)
   const usable = Array.isArray(slides) ? slides.filter((s) => s?.image) : []
   const items = usable.length ? usable : [fallback]
   const current = items[Math.min(active, items.length - 1)] || fallback
+  const contactPhone = String(phone || '').trim()
+  const contactEmail = String(email || '').trim()
+  const phoneHref = contactPhone ? `tel:${contactPhone.replace(/[^+\d]/g, '')}` : ''
+  const emailHref = contactEmail ? `mailto:${contactEmail}` : ''
 
   useEffect(() => {
     if (paused || items.length <= 1) return undefined
@@ -77,6 +81,20 @@ export default function HeroSlider({ slides = [], fallback = FALLBACK }) {
             {current.secondaryText && (
               <Button asChild size="lg" variant="outline" className="h-12 border-white/60 bg-black/10 px-7 text-base text-white hover:bg-white hover:text-[#11181f]">
                 <Link href={current.secondaryHref || '/categories'}>{current.secondaryText}</Link>
+              </Button>
+            )}
+            {contactPhone && (
+              <Button asChild size="lg" className="h-12 bg-[#b8d6e5] px-6 text-base text-[#11181f] hover:bg-white" title={`Call ${contactPhone}`}>
+                <a href={phoneHref} aria-label={`Call ADYTRIX at ${contactPhone}`}>
+                  <Phone className="mr-2 h-4 w-4" /> Call Us
+                </a>
+              </Button>
+            )}
+            {contactEmail && (
+              <Button asChild size="lg" variant="outline" className="h-12 border-[#b8d6e5] bg-black/10 px-6 text-base text-white hover:bg-white hover:text-[#11181f]" title={`Email ${contactEmail}`}>
+                <a href={emailHref} aria-label={`Email ADYTRIX at ${contactEmail}`}>
+                  <Mail className="mr-2 h-4 w-4" /> Email Us
+                </a>
               </Button>
             )}
           </div>
