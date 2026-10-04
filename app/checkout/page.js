@@ -19,13 +19,13 @@ export default function CheckoutPage() {
   const [user, setUser] = useState(undefined)
   const [placing, setPlacing] = useState(false)
   const [method, setMethod] = useState('razorpay')
+  const [guestPassword, setGuestPassword] = useState('')
   const [form, setForm] = useState({ name: '', phone: '', email: '', address: '', city: '', state: '', postalCode: '', country: 'India' })
 
   useEffect(() => {
     fetch('/api/auth/me').then((r) => r.json()).then((d) => {
       setUser(d.user)
-      if (!d.user) router.replace('/login?redirect=/checkout')
-      else setForm((f) => ({ ...f, name: d.user.name || '', email: d.user.email || '', phone: d.user.phone || '' }))
+      if (d.user) setForm((f) => ({ ...f, name: d.user.name || '', email: d.user.email || '', phone: d.user.phone || '' }))
     })
   }, [router])
 
@@ -40,10 +40,22 @@ export default function CheckoutPage() {
     try {
       const res = await fetch('/api/orders', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })), deliveryAddress: form, paymentMethod: method }),
+        body: JSON.stringify({
+          items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+          deliveryAddress: form,
+          paymentMethod: method,
+          ...(!user ? { password: guestPassword } : {}),
+        }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Could not create order')
+      if (!res.ok) {
+        if (res.status === 409) {
+          toast.error(data.error || 'Please sign in to continue')
+          router.push('/login?redirect=/checkout')
+          return
+        }
+        throw new Error(data.error || 'Could not create order')
+      }
       clear()
       const created = data.order
       if (method === 'razorpay') {
@@ -82,6 +94,14 @@ export default function CheckoutPage() {
               <div><Label htmlFor="name">Full Name</Label><Input id="name" required value={form.name} onChange={set('name')} className="mt-1.5" /></div>
               <div><Label htmlFor="phone">Phone Number</Label><Input id="phone" required value={form.phone} onChange={set('phone')} className="mt-1.5" /></div>
               <div className="sm:col-span-2"><Label htmlFor="email">Email Address</Label><Input id="email" type="email" required value={form.email} onChange={set('email')} className="mt-1.5" /></div>
+              {!user && (
+                <div className="sm:col-span-2 rounded-lg bg-[#eaf3f7] p-4">
+                  <Label htmlFor="guestPassword">Password for future login</Label>
+                  <Input id="guestPassword" type="password" required minLength={6} value={guestPassword} onChange={(e) => setGuestPassword(e.target.value)} className="mt-1.5 bg-white" placeholder="At least 6 characters" />
+                  <p className="mt-1.5 text-xs text-muted-foreground">No separate signup is needed. We’ll create your customer account automatically after you place this order.</p>
+                  <p className="mt-2 text-xs text-muted-foreground">Already have an account? <Link href="/login?redirect=/checkout" className="font-medium text-[#5f8aa1] hover:underline">Sign in</Link></p>
+                </div>
+              )}
               <div className="sm:col-span-2"><Label htmlFor="address">Full Delivery Address</Label><Input id="address" required value={form.address} onChange={set('address')} className="mt-1.5" placeholder="House no, street, area, landmark" /></div>
               <div><Label htmlFor="city">City</Label><Input id="city" required value={form.city} onChange={set('city')} className="mt-1.5" /></div>
               <div><Label htmlFor="state">State</Label><Input id="state" required value={form.state} onChange={set('state')} className="mt-1.5" /></div>
