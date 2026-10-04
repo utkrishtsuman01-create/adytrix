@@ -94,12 +94,12 @@ export default async function ProductPage({ params }) {
         <ProductGallery images={product.images || []} name={product.name} />
 
         <div>
-          {category && <Link href={`/categories/${category.slug}`} className="text-xs uppercase tracking-wider text-[#B8862F] hover:underline">{category.name}</Link>}
+          {category && <Link href={`/categories/${category.slug}`} className="text-xs uppercase tracking-wider text-[#5f8aa1] hover:underline">{category.name}</Link>}
           <h1 className="mt-2 font-display text-3xl sm:text-4xl leading-tight">{product.name}</h1>
 
           <div className="mt-4 flex items-center gap-2">
-            {product.featured && <span className="rounded-full bg-[#f0e4cc] px-3 py-1 text-xs font-medium text-[#8A6420]">Featured</span>}
-            {product.trending && <span className="rounded-full bg-[#1f1a16] px-3 py-1 text-xs font-medium text-[#f4ead6]">Trending</span>}
+            {product.featured && <span className="rounded-full bg-[#d9eaf2] px-3 py-1 text-xs font-medium text-[#446c82]">Featured</span>}
+            {product.trending && <span className="rounded-full bg-[#11181f] px-3 py-1 text-xs font-medium text-[#f2f8fb]">Trending</span>}
           </div>
 
           <div className="mt-5 flex flex-wrap items-baseline gap-3">
@@ -117,9 +117,9 @@ export default async function ProductPage({ params }) {
           </div>
 
           <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-            <div className="flex items-center gap-2 rounded-lg border border-border bg-card p-3"><Truck className="h-4 w-4 text-[#B8862F]" /> Free shipping over ₹999</div>
-            <div className="flex items-center gap-2 rounded-lg border border-border bg-card p-3"><ShieldCheck className="h-4 w-4 text-[#B8862F]" /> Secure checkout</div>
-            <div className="flex items-center gap-2 rounded-lg border border-border bg-card p-3"><Check className="h-4 w-4 text-[#B8862F]" /> Handmade quality</div>
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-card p-3"><Truck className="h-4 w-4 text-[#5f8aa1]" /> Free shipping over ₹999</div>
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-card p-3"><ShieldCheck className="h-4 w-4 text-[#5f8aa1]" /> Secure checkout</div>
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-card p-3"><Check className="h-4 w-4 text-[#5f8aa1]" /> Handmade quality</div>
           </div>
 
           {product.description && (
