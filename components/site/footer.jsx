@@ -17,7 +17,7 @@ export default function Footer() {
   const facebook = site?.footer?.facebook || SOCIAL.facebook
   const logo = site?.header?.logoUrl || LOGO
   const tagline = site?.footer?.tagline || TAGLINE
-  const description = site?.footer?.description || '{description}'
+  const description = site?.footer?.description || 'Premium handcrafted decor and lifestyle products — artificial flowers, festive torans, hangings, bells, handbags and shirts.'
   return (
     <footer className="mt-20 bg-[#1b1613] text-[#e9ddc8]">
       <div className="container py-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
@@ -29,7 +29,7 @@ export default function Footer() {
               <div className="text-[11px] tracking-[0.25em] uppercase text-[#B8862F]">{tagline}</div>
             </div>
           </div>
-          <p className="text-sm text-[#c9bca5] leading-relaxed">Premium handcrafted decor and lifestyle products — artificial flowers, festive torans, hangings, bells, handbags and shirts.</p>
+          <p className="text-sm text-[#c9bca5] leading-relaxed">{description}</p>
           <div className="flex gap-3 pt-2">
             <a href={facebook} target="_blank" rel="noopener noreferrer" aria-label="ADYTRIX on Facebook" className="h-9 w-9 rounded-full border border-[#3a322a] flex items-center justify-center hover:bg-[#B8862F] hover:text-white transition-colors"><Facebook className="h-4 w-4" /></a>
             <a href={instagram} target="_blank" rel="noopener noreferrer" aria-label="ADYTRIX on Instagram" className="h-9 w-9 rounded-full border border-[#3a322a] flex items-center justify-center hover:bg-[#B8862F] hover:text-white transition-colors"><Instagram className="h-4 w-4" /></a>
@@ -51,8 +51,8 @@ export default function Footer() {
         </div>
         <div>
           <h3 className="font-display text-lg mb-4">Stay Connected</h3>
-          <p className="text-sm text-[#c9bca5] mb-3">Follow ADYTRIX for new arrivals, festive collections and offers.</p>
-          <a href={SOCIAL.instagram} target="_blank" rel="noopener noreferrer" className="inline-block text-sm font-medium text-[#B8862F] hover:underline">@ady_trix on Instagram →</a>
+          <p className="text-sm text-[#c9bca5] mb-3">{description}</p>
+          <a href={instagram} target="_blank" rel="noopener noreferrer" className="inline-block text-sm font-medium text-[#B8862F] hover:underline">@ady_trix on Instagram →</a>
         </div>
       </div>
       <div className="border-t border-[#2b241e]">
