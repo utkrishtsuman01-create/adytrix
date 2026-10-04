@@ -84,11 +84,13 @@ export default function Header() {
           </div>
 
           <Link href="/" className="flex items-center select-none shrink-0" aria-label="ADYTRIX home">
-            <img
-              src={LOGO}
-              alt="ADYTRIX — Where Tradition Meets Beauty"
-              className="h-16 w-[92px] sm:h-20 sm:w-[112px] object-contain"
-            />
+            <span className="relative flex h-16 w-28 items-center justify-center overflow-hidden sm:h-20 sm:w-36">
+              <img
+                src={LOGO}
+                alt="ADYTRIX — Where Tradition Meets Beauty"
+                className="absolute left-1/2 top-1/2 h-auto w-48 max-w-none -translate-x-1/2 -translate-y-1/2 sm:w-60"
+              />
+            </span>
           </Link>
 
           <nav className="hidden lg:flex items-center gap-8">
