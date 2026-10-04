@@ -21,10 +21,13 @@ function getRazorpay() {
 }
 
 function cors(res) {
-  res.headers.set('Access-Control-Allow-Origin', process.env.CORS_ORIGINS || '*')
+  const allowed = (process.env.CORS_ORIGINS || '').split(',').map((v) => v.trim()).filter(Boolean)
+  const origin = res.headers.get('origin')
+  if (origin && allowed.includes(origin)) res.headers.set('Access-Control-Allow-Origin', origin)
   res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
   res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   res.headers.set('Access-Control-Allow-Credentials', 'true')
+  res.headers.set('Vary', 'Origin')
   return res
 }
 function json(data, status = 200) { return cors(NextResponse.json(data, { status })) }
