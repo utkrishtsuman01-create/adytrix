@@ -15,7 +15,7 @@ export default function AboutPage() {
       <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'About' }]} />
       <div className="mt-6 grid lg:grid-cols-2 gap-10 items-center">
         <div>
-          <span className="text-xs tracking-[0.3em] uppercase text-[#B8862F]">Our Story</span>
+          <span className="text-xs tracking-[0.3em] uppercase text-[#5f8aa1]">Our Story</span>
           <h1 className="mt-3 font-display text-4xl sm:text-5xl">About ADYTRIX</h1>
           <p className="mt-5 text-muted-foreground leading-relaxed">ADYTRIX was born from a love for timeless Indian craftsmanship and a belief that beautiful decor should be accessible to every home. What began as a small collection of handcrafted festive pieces has grown into a trusted brand loved by thousands of customers across Flipkart, Meesho and Shopsy.</p>
           <p className="mt-4 text-muted-foreground leading-relaxed">Today, we bring our full range — artificial flowers, festive torans, decorative hangings, brass-finish bells, handbags and shirts — to one premium destination, designed and curated with care.</p>
