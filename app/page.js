@@ -49,7 +49,7 @@ function HomeSection({ section, featured, trending, categories }) {
 
     case 'categories':
       return (
-        <section className="bg-[#faf4e9] py-16">
+        <section className="bg-[#eaf3f7] py-16">
           <div className="container">
             <SectionHeading eyebrow={section.eyebrow} title={section.title || 'Shop by Category'} href={section.href || '/categories'} linkLabel="All categories" />
             <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
@@ -96,7 +96,7 @@ function HomeSection({ section, featured, trending, categories }) {
       return (
         <section className="container py-16">
           <div className="mx-auto mb-12 max-w-2xl text-center">
-            <span className="text-xs uppercase tracking-[0.3em] text-[#B8862F]">{section.eyebrow || 'Why shop with us'}</span>
+            <span className="text-xs uppercase tracking-[0.3em] text-[#5f8aa1]">{section.eyebrow || 'Why shop with us'}</span>
             <h2 className="mt-3 font-display text-3xl sm:text-4xl">{section.title || 'The ADYTRIX promise'}</h2>
           </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -105,7 +105,7 @@ function HomeSection({ section, featured, trending, categories }) {
               const Icon = icons[index % icons.length]
               return (
                 <div key={index} className="rounded-xl border border-border bg-card p-6 text-center">
-                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#f0e4cc] text-[#8A6420]"><Icon className="h-6 w-6" /></div>
+                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#d9eaf2] text-[#446c82]"><Icon className="h-6 w-6" /></div>
                   <h3 className="text-lg font-medium">{item.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.text}</p>
                 </div>
@@ -117,9 +117,9 @@ function HomeSection({ section, featured, trending, categories }) {
 
     case 'social':
       return (
-        <section className="bg-[#faf4e9] py-16">
+        <section className="bg-[#eaf3f7] py-16">
           <div className="container text-center">
-            <span className="text-xs uppercase tracking-[0.3em] text-[#B8862F]">{section.eyebrow || '@ady_trix'}</span>
+            <span className="text-xs uppercase tracking-[0.3em] text-[#5f8aa1]">{section.eyebrow || '@ady_trix'}</span>
             <h2 className="mt-3 font-display text-3xl sm:text-4xl">{section.title || 'Follow our journey'}</h2>
             <p className="mx-auto mt-3 max-w-xl text-muted-foreground">{section.text || 'Join our community on Instagram and Facebook.'}</p>
             <div className="mx-auto mt-8 grid max-w-4xl grid-cols-2 gap-4 md:grid-cols-4">
@@ -154,18 +154,18 @@ function HomeSection({ section, featured, trending, categories }) {
 
 function ContentImageSection({ dark = false, eyebrow, title, text, text2, image, imagePosition = 'right', buttonText, buttonHref }) {
   const imageFirst = imagePosition === 'left'
-  const shell = dark ? 'bg-[#1b1613] text-[#e9ddc8]' : 'bg-background'
+  const shell = dark ? 'bg-[#11181f] text-[#e4f0f5]' : 'bg-background'
   return (
     <section className={`${shell} py-16 lg:py-20`}>
       <div className="container grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
         {image && imageFirst && <img src={image} alt="" loading="lazy" className="aspect-[4/3] w-full rounded-2xl object-cover shadow-xl" />}
         <div className={imageFirst ? '' : 'lg:order-2'}>
-          {eyebrow && <span className="text-xs uppercase tracking-[0.3em] text-[#B8862F]">{eyebrow}</span>}
+          {eyebrow && <span className="text-xs uppercase tracking-[0.3em] text-[#5f8aa1]">{eyebrow}</span>}
           <h2 className={`mt-3 font-display text-3xl sm:text-4xl ${dark ? 'text-white' : ''}`}>{title}</h2>
-          {text && <p className={`mt-5 leading-relaxed ${dark ? 'text-[#c9bca5]' : 'text-muted-foreground'}`}>{text}</p>}
-          {text2 && <p className={`mt-4 leading-relaxed ${dark ? 'text-[#c9bca5]' : 'text-muted-foreground'}`}>{text2}</p>}
+          {text && <p className={`mt-5 leading-relaxed ${dark ? 'text-[#b7cad4]' : 'text-muted-foreground'}`}>{text}</p>}
+          {text2 && <p className={`mt-4 leading-relaxed ${dark ? 'text-[#b7cad4]' : 'text-muted-foreground'}`}>{text2}</p>}
           {buttonText && (
-            <Button asChild variant={dark ? 'outline' : 'default'} className={dark ? 'mt-7 border-[#B8862F] text-[#e9ddc8] hover:bg-[#B8862F] hover:text-white' : 'mt-7'}>
+            <Button asChild variant={dark ? 'outline' : 'default'} className={dark ? 'mt-7 border-[#5f8aa1] text-[#e4f0f5] hover:bg-[#5f8aa1] hover:text-white' : 'mt-7'}>
               <Link href={buttonHref || '/'}>{buttonText}<ArrowRight className="ml-2 h-4 w-4" /></Link>
             </Button>
           )}
@@ -180,10 +180,10 @@ function SectionHeading({ eyebrow, title, href, linkLabel }) {
   return (
     <div className="mb-8 flex items-end justify-between gap-4">
       <div>
-        {eyebrow && <span className="text-xs uppercase tracking-[0.3em] text-[#B8862F]">{eyebrow}</span>}
+        {eyebrow && <span className="text-xs uppercase tracking-[0.3em] text-[#5f8aa1]">{eyebrow}</span>}
         <h2 className="mt-2 font-display text-3xl sm:text-4xl">{title}</h2>
       </div>
-      {href && <Link href={href} className="shrink-0 whitespace-nowrap text-sm font-medium text-foreground/70 hover:text-[#B8862F]">{linkLabel} →</Link>}
+      {href && <Link href={href} className="shrink-0 whitespace-nowrap text-sm font-medium text-foreground/70 hover:text-[#5f8aa1]">{linkLabel} →</Link>}
     </div>
   )
 }
@@ -199,23 +199,23 @@ function ContactStrip({ phone, email }) {
   if (!hasPhone && !hasEmail) return null
 
   return (
-    <section className="border-t border-border bg-[#faf4e9] py-12">
+    <section className="border-t border-border bg-[#eaf3f7] py-12">
       <div className="container">
         <div className="rounded-2xl border border-[#eadfc9] bg-white p-6 sm:p-8">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <span className="text-xs uppercase tracking-[0.3em] text-[#B8862F]">Need help?</span>
+              <span className="text-xs uppercase tracking-[0.3em] text-[#5f8aa1]">Need help?</span>
               <h2 className="mt-2 font-display text-2xl sm:text-3xl">Talk to ADYTRIX</h2>
               <p className="mt-2 text-sm text-muted-foreground">For product questions, orders and support, contact us directly.</p>
             </div>
             <div className="flex flex-wrap gap-3">
               {hasPhone && (
-                <a href={`tel:${phone.replace(/[^+\d]/g, '')}`} className="inline-flex h-11 items-center justify-center rounded-lg bg-[#1b1613] px-5 text-sm font-medium text-white transition hover:bg-[#B8862F]">
+                <a href={`tel:${phone.replace(/[^+\d]/g, '')}`} className="inline-flex h-11 items-center justify-center rounded-lg bg-[#11181f] px-5 text-sm font-medium text-white transition hover:bg-[#5f8aa1]">
                   Call {phone}
                 </a>
               )}
               {hasEmail && (
-                <a href={`mailto:${email}`} className="inline-flex h-11 items-center justify-center rounded-lg border border-[#1b1613] px-5 text-sm font-medium text-[#1b1613] transition hover:bg-[#1b1613] hover:text-white">
+                <a href={`mailto:${email}`} className="inline-flex h-11 items-center justify-center rounded-lg border border-[#11181f] px-5 text-sm font-medium text-[#11181f] transition hover:bg-[#11181f] hover:text-white">
                   Email {email}
                 </a>
               )}
