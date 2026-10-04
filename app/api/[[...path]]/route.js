@@ -315,7 +315,7 @@ async function handleRoute(request, { params }) {
         createdAt: now, updatedAt: now,
       }
       await db.collection('orders').insertOne(order)
-      await db.collection('order_status_history').insertOne({ id: uuidv4(), orderId: order.id, status: 'pending', changedBy: auth.uid, timestamp: now })
+      await db.collection('order_status_history').insertOne({ id: uuidv4(), orderId: order.id, status: 'pending', changedBy: orderUser.uid, timestamp: now })
       const { _id, ...rest } = order
       const response = json({ order: rest }, 201)
       if (createdGuestUser) {
