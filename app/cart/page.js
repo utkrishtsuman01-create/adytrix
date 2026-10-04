@@ -14,7 +14,7 @@ export default function CartPage() {
   if (ready && items.length === 0) {
     return (
       <div className="container py-20 text-center">
-        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#f0e4cc] text-[#8A6420]"><ShoppingBag className="h-9 w-9" /></div>
+        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#d9eaf2] text-[#446c82]"><ShoppingBag className="h-9 w-9" /></div>
         <h1 className="font-display text-3xl">Your cart is empty</h1>
         <p className="mt-2 text-muted-foreground">Looks like you haven’t added anything yet.</p>
         <Button asChild size="lg" className="mt-6"><Link href="/shop">Continue Shopping</Link></Button>
@@ -29,12 +29,12 @@ export default function CartPage() {
         <div className="lg:col-span-2 space-y-4">
           {items.map((item) => (
             <div key={item.productId} className="flex gap-4 rounded-xl border border-border bg-card p-4">
-              <Link href={`/products/${item.slug}`} className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-[#f3ece0]">
+              <Link href={`/products/${item.slug}`} className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-[#e7f0f4]">
                 {item.image ? <img src={item.image} alt={item.name} className="h-full w-full object-cover" /> : null}
               </Link>
               <div className="flex flex-1 flex-col">
                 <div className="flex justify-between gap-2">
-                  <Link href={`/products/${item.slug}`} className="font-medium leading-snug line-clamp-2 hover:text-[#B8862F]">{item.name}</Link>
+                  <Link href={`/products/${item.slug}`} className="font-medium leading-snug line-clamp-2 hover:text-[#5f8aa1]">{item.name}</Link>
                   <button onClick={() => removeItem(item.productId)} className="text-muted-foreground hover:text-destructive" aria-label="Remove item"><Trash2 className="h-4 w-4" /></button>
                 </div>
                 <div className="mt-1 text-sm text-muted-foreground">{inr(item.price)} each</div>
