@@ -10,7 +10,6 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/s
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 import { useCart } from '@/components/site/cart'
 import { NAV, BRAND } from '@/lib/site'
-import { LOGO } from '@/lib/assets'
 
 export default function Header() {
   const router = useRouter()
@@ -83,15 +82,7 @@ export default function Header() {
             </Sheet>
           </div>
 
-          <Link href="/" className="flex items-center select-none shrink-0" aria-label="ADYTRIX home">
-            <span className="relative flex h-16 w-28 items-center justify-center overflow-hidden sm:h-20 sm:w-36">
-              <img
-                src={LOGO}
-                alt="ADYTRIX — Where Tradition Meets Beauty"
-                className="absolute left-1/2 top-1/2 h-auto w-48 max-w-none -translate-x-1/2 -translate-y-1/2 sm:w-60"
-              />
-            </span>
-          </Link>
+          <div className="w-28 shrink-0 sm:w-36" aria-hidden="true" />
 
           <nav className="hidden lg:flex items-center gap-8">
             {NAV.map((n) => (
