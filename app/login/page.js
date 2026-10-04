@@ -44,7 +44,7 @@ export default function LoginPage() {
           <div><Label htmlFor="password">Password</Label><Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1.5" /></div>
           <Button type="submit" size="lg" className="w-full" disabled={loading}>{loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Sign In'}</Button>
         </form>
-        <p className="mt-6 text-center text-sm text-muted-foreground">Don’t have an account? <Link href="/signup" className="font-medium text-[#B8862F] hover:underline">Create one</Link></p>
+        <p className="mt-6 text-center text-sm text-muted-foreground">Don’t have an account? <Link href="/signup" className="font-medium text-[#5f8aa1] hover:underline">Create one</Link></p>
       </div>
     </div>
   )
