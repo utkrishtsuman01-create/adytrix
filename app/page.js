@@ -3,7 +3,7 @@ import { ArrowRight, Truck, ShieldCheck, Sparkles, Heart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import ProductCard from '@/components/site/product-card'
 import { getFeaturedProducts, getTrendingProducts, getActiveCategories } from '@/lib/data'
-import { CRAFT1, TORAN1, GARLAND1, HANGING2 } from '@/lib/assets'
+import { CRAFT1, GARLAND1, HANGING1, HANGING2 } from '@/lib/assets'
 import HeroSlider from '@/components/site/hero-slider'
 import { SOCIAL } from '@/lib/site'
 
@@ -19,7 +19,7 @@ export default async function HomePage() {
   return (
     <div>
       {/* HERO */}
-      <HeroSlider slides={[TORAN1, GARLAND1, HANGING2, CRAFT1]}>
+      <HeroSlider slides={[HANGING1, GARLAND1, HANGING2, CRAFT1]}>
         <span className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-1.5 text-xs font-medium tracking-wide text-white backdrop-blur-sm">
           <Sparkles className="h-3.5 w-3.5" /> Handcrafted festive & lifestyle decor
         </span>
@@ -132,7 +132,7 @@ export default async function HomePage() {
           <h2 className="mt-3 font-display text-3xl sm:text-4xl">Follow our journey</h2>
           <p className="mt-3 text-muted-foreground max-w-xl mx-auto">Join our community on Instagram and Facebook for new arrivals, festive inspiration and styling ideas.</p>
           <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
-            {[TORAN1, GARLAND1, HANGING2, CRAFT1].map((src, i) => (
+            {[HANGING1, GARLAND1, HANGING2, CRAFT1].map((src, i) => (
               <a key={i} href={SOCIAL.instagram} target="_blank" rel="noopener noreferrer" className="overflow-hidden rounded-xl border border-border aspect-square group">
                 <img src={src} alt="ADYTRIX decor featured on Instagram" loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
               </a>
