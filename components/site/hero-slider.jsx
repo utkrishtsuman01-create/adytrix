@@ -83,19 +83,23 @@ export default function HeroSlider({ slides = [], fallback = FALLBACK, phone = '
                 <Link href={current.secondaryHref || '/categories'}>{current.secondaryText}</Link>
               </Button>
             )}
-            {contactPhone && (
-              <Button asChild size="lg" className="h-12 bg-[#b8d6e5] px-6 text-base text-[#11181f] hover:bg-white" title={`Call ${contactPhone}`}>
-                <a href={phoneHref} aria-label={`Call ADYTRIX at ${contactPhone}`}>
-                  <Phone className="mr-2 h-4 w-4" /> Call Us
-                </a>
-              </Button>
-            )}
-            {contactEmail && (
-              <Button asChild size="lg" variant="outline" className="h-12 border-[#b8d6e5] bg-black/10 px-6 text-base text-white hover:bg-white hover:text-[#11181f]" title={`Email ${contactEmail}`}>
-                <a href={emailHref} aria-label={`Email ADYTRIX at ${contactEmail}`}>
-                  <Mail className="mr-2 h-4 w-4" /> Email Us
-                </a>
-              </Button>
+            {(contactPhone || contactEmail) && (
+              <div className="flex flex-wrap gap-3">
+                {contactPhone && (
+                  <Button asChild size="lg" className="h-12 bg-[#b8d6e5] px-6 text-base text-[#11181f] hover:bg-white" title={`Call ${contactPhone}`}>
+                    <a href={phoneHref} aria-label={`Call ADYTRIX at ${contactPhone}`}>
+                      <Phone className="mr-2 h-4 w-4" /> Call Us
+                    </a>
+                  </Button>
+                )}
+                {contactEmail && (
+                  <Button asChild size="lg" variant="outline" className="h-12 border-[#b8d6e5] bg-black/10 px-6 text-base text-white hover:bg-white hover:text-[#11181f]" title={`Email ${contactEmail}`}>
+                    <a href={emailHref} aria-label={`Email ADYTRIX at ${contactEmail}`}>
+                      <Mail className="mr-2 h-4 w-4" /> Email Us
+                    </a>
+                  </Button>
+                )}
+              </div>
             )}
           </div>
           <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm text-white/85">
