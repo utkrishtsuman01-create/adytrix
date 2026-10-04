@@ -31,6 +31,7 @@ export const metadata = {
     title: 'ADYTRIX | Premium Artificial Flowers & Lifestyle Products',
     description: SITE_DESCRIPTION,
   },
+  icons: { icon: '/adytrix-favicon.svg', shortcut: '/adytrix-favicon.svg', apple: '/adytrix-favicon.svg' },
   robots: { index: true, follow: true },
 }
 
