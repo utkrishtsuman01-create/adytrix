@@ -31,7 +31,7 @@ export default async function ContactPage() {
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
         {phone && (
-          <a href={`tel:${phone.replace(/[^+\\d]/g, '')}` } className="flex items-center gap-4 rounded-xl border border-border bg-card p-5 transition hover:-translate-y-0.5 hover:shadow-md">
+          <a href={`tel:${phone.replace(/[^+\d]/g, '')}`} className="flex items-center gap-4 rounded-xl border border-border bg-card p-5 transition hover:-translate-y-0.5 hover:shadow-md">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f0e4cc] text-[#8A6420]"><Phone className="h-6 w-6" /></div>
             <div><p className="font-medium">Call us</p><p className="text-sm text-muted-foreground">{phone}</p></div>
           </a>
