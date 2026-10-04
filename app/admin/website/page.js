@@ -264,9 +264,12 @@ export default function AdminWebsitePage() {
         <h2 className="font-display text-2xl">Footer</h2>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div><Label>Tagline</Label><Input className="mt-1.5" value={config.footer?.tagline || ''} onChange={(e) => updateNested('footer', { tagline: e.target.value })} /></div>
+          <div><Label>Public phone number</Label><Input className="mt-1.5" value={config.footer?.phone || ''} onChange={(e) => updateNested('footer', { phone: e.target.value })} placeholder="+91 ..." /></div>
+          <div><Label>Public email address</Label><Input type="email" className="mt-1.5" value={config.footer?.email || ''} onChange={(e) => updateNested('footer', { email: e.target.value })} placeholder="hello@yourbusiness.com" /></div>
           <div><Label>Instagram URL</Label><Input className="mt-1.5" value={config.footer?.instagram || ''} onChange={(e) => updateNested('footer', { instagram: e.target.value })} /></div>
           <div className="md:col-span-2"><Label>Description</Label><Textarea rows={3} className="mt-1.5" value={config.footer?.description || ''} onChange={(e) => updateNested('footer', { description: e.target.value })} /></div>
           <div><Label>Facebook URL</Label><Input className="mt-1.5" value={config.footer?.facebook || ''} onChange={(e) => updateNested('footer', { facebook: e.target.value })} /></div>
+          <p className="md:col-span-2 text-xs text-muted-foreground">Use the public business contact details here. Do not enter the private admin login phone number or password.</p>
         </div>
       </section>
     </div>
