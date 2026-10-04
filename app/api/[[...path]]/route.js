@@ -133,10 +133,15 @@ async function handleRoute(request, { params }) {
     if (route === '/auth/login' && method === 'POST') {
       const rl = rateLimit(`login:${clientIp(request)}`, 10, 60000)
       if (!rl.ok) return err('Too many attempts. Please try again later.', 429)
-      const email = String(body.email || '').trim().toLowerCase()
+      const identifier = String(body.identifier || body.email || body.phone || '').trim()
       const password = String(body.password || '')
-      const user = await db.collection('users').findOne({ email, role: 'customer' })
-      if (!user || !verifyPassword(password, user.passwordHash)) return err('Invalid email or password.', 401)
+      if (!identifier || password.length < 1) return err('Please enter your email or phone number and password.')
+      const normalizedEmail = identifier.toLowerCase()
+      const user = await db.collection('users').findOne({
+        role: 'customer',
+        $or: [{ email: normalizedEmail }, { phone: identifier }],
+      })
+      if (!user || !verifyPassword(password, user.passwordHash)) return err('Invalid email/phone or password.', 401)
       const token = signToken({ uid: user.id, role: user.role, name: user.name })
       return setAuthCookie(json({ user: sanitizeUser(user) }), token)
     }
@@ -245,18 +250,54 @@ async function handleRoute(request, { params }) {
 
     // ---------------- ORDERS (customer) ----------------
     if (route === '/orders' && method === 'POST') {
-      if (!auth) return err('Please sign in to place an order.', 401)
       const addr = body.deliveryAddress || {}
       const required = ['name', 'phone', 'email', 'address', 'city', 'state', 'postalCode']
       for (const f of required) if (!String(addr[f] || '').trim()) return err(`Missing delivery field: ${f}`)
+      const email = String(addr.email || '').trim().toLowerCase()
+      const phone = String(addr.phone || '').trim()
+      if (!EMAIL_RX.test(email)) return err('Please provide a valid email address.')
+      if (!PHONE_RX.test(phone)) return err('Please provide a valid 10-digit phone number.')
+      if (!auth) {
+        const guestPassword = String(body.password || '')
+        if (guestPassword.length < 6) return err('Please set a password of at least 6 characters for future login.')
+        const existing = await db.collection('users').findOne({
+          role: 'customer',
+          $or: [{ email }, { phone }],
+        })
+        if (existing) return err('An account already uses this email or phone. Please sign in to continue.', 409)
+      }
       const method_ = body.paymentMethod === 'cod' ? 'cod' : 'razorpay'
       const priced = await recomputeItems(db, body.items)
       if (priced.error) return err(priced.error)
+
+      let orderUser = auth
+      let createdGuestUser = null
+      if (!auth) {
+        const now = new Date()
+        createdGuestUser = {
+          id: uuidv4(),
+          name: String(addr.name).trim(),
+          email,
+          phone,
+          passwordHash: hashPassword(String(body.password || '')),
+          role: 'customer',
+          createdAt: now,
+          updatedAt: now,
+        }
+        try {
+          await db.collection('users').insertOne(createdGuestUser)
+        } catch (e) {
+          if (e?.code === 11000) return err('An account was just created with this email or phone. Please sign in to continue.', 409)
+          throw e
+        }
+        orderUser = { uid: createdGuestUser.id, role: 'customer', name: createdGuestUser.name }
+      }
+
       const now = new Date()
       const order = {
         id: uuidv4(),
         orderNumber: 'ADX' + Date.now().toString().slice(-8) + Math.floor(Math.random() * 90 + 10),
-        userId: auth.uid,
+        userId: orderUser.uid,
         items: priced.items,
         subtotal: priced.subtotal,
         discount: priced.discount,
@@ -276,7 +317,12 @@ async function handleRoute(request, { params }) {
       await db.collection('orders').insertOne(order)
       await db.collection('order_status_history').insertOne({ id: uuidv4(), orderId: order.id, status: 'pending', changedBy: auth.uid, timestamp: now })
       const { _id, ...rest } = order
-      return json({ order: rest }, 201)
+      const response = json({ order: rest }, 201)
+      if (createdGuestUser) {
+        const token = signToken({ uid: createdGuestUser.id, role: createdGuestUser.role, name: createdGuestUser.name })
+        return setAuthCookie(response, token)
+      }
+      return response
     }
 
     if (route === '/orders' && method === 'GET') {
