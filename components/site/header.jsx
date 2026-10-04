@@ -27,7 +27,6 @@ export default function Header() {
 
   if (pathname && pathname.startsWith('/admin')) return null
 
-
   const submitSearch = (e) => {
     e.preventDefault()
     if (!q.trim()) return
@@ -48,8 +47,9 @@ export default function Header() {
       <div className="bg-[#1f1a16] text-[#f4ead6] text-center text-xs sm:text-sm py-2 px-4 tracking-wide">
         Handcrafted with love · Free shipping on orders over ₹999
       </div>
+
       <div className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <div className="container flex h-16 sm:h-20 items-center justify-between gap-4">
+        <div className="container flex h-20 sm:h-24 items-center justify-between gap-4">
           <div className="flex items-center gap-2 lg:hidden">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
@@ -83,13 +83,12 @@ export default function Header() {
             </Sheet>
           </div>
 
-          <Link href="/" className="flex flex-col items-center lg:items-start leading-none select-none">
+          <Link href="/" className="flex items-center select-none shrink-0" aria-label="ADYTRIX home">
             <img
               src={LOGO}
-              alt={BRAND}
-              className="h-10 w-auto max-w-[150px] object-contain sm:h-12 sm:max-w-[180px]"
+              alt="ADYTRIX — Where Tradition Meets Beauty"
+              className="h-16 w-[92px] sm:h-20 sm:w-[112px] object-contain"
             />
-            <span className="hidden sm:block text-[10px] tracking-[0.3em] uppercase text-[#B8862F] mt-1">Where Tradition Meets Beauty</span>
           </Link>
 
           <nav className="hidden lg:flex items-center gap-8">
