@@ -75,6 +75,10 @@ async function recomputeItems(db, rawItems) {
       price,
       mrp,
       quantity: qty,
+      shippingWeight: Number(p.shippingWeight) > 0 ? Number(p.shippingWeight) : 0.5,
+      shippingLength: Number(p.shippingLength) > 0 ? Number(p.shippingLength) : 20,
+      shippingWidth: Number(p.shippingWidth) > 0 ? Number(p.shippingWidth) : 15,
+      shippingHeight: Number(p.shippingHeight) > 0 ? Number(p.shippingHeight) : 10,
     })
   }
   if (items.length === 0) return { error: 'Cart is empty' }
@@ -561,12 +565,21 @@ async function handleRoute(request, { params }) {
       if (order.shiprocketOrderId) return json({ ok: true, alreadyCreated: true, order })
 
       const defaults = getShiprocketConfig().defaults || { weightKg: 0.5, lengthCm: 20, widthCm: 15, heightCm: 10 }
+      const calculatedFromProducts = (order.items || []).reduce((acc, item) => {
+        const qty = Number(item.quantity) > 0 ? Number(item.quantity) : 1
+        acc.weight += (Number(item.shippingWeight) > 0 ? Number(item.shippingWeight) : defaults.weightKg || 0.5) * qty
+        acc.length = Math.max(acc.length, Number(item.shippingLength) > 0 ? Number(item.shippingLength) : defaults.lengthCm || 20)
+        acc.width = Math.max(acc.width, Number(item.shippingWidth) > 0 ? Number(item.shippingWidth) : defaults.widthCm || 15)
+        acc.height = Math.max(acc.height, Number(item.shippingHeight) > 0 ? Number(item.shippingHeight) : defaults.heightCm || 10)
+        return acc
+      }, { weight: 0, length: 0, width: 0, height: 0 })
+
       const rawPkg = body.package || order.shipmentPackage || {}
       const pkg = {
-        weight: Number(rawPkg.weight) > 0 ? Number(rawPkg.weight) : Number(defaults.weightKg) || 0.5,
-        length: Number(rawPkg.length) > 0 ? Number(rawPkg.length) : Number(defaults.lengthCm) || 20,
-        width: Number(rawPkg.width) > 0 ? Number(rawPkg.width) : Number(defaults.widthCm) || 15,
-        height: Number(rawPkg.height) > 0 ? Number(rawPkg.height) : Number(defaults.heightCm) || 10,
+        weight: Number(rawPkg.weight) > 0 ? Number(rawPkg.weight) : calculatedFromProducts.weight || Number(defaults.weightKg) || 0.5,
+        length: Number(rawPkg.length) > 0 ? Number(rawPkg.length) : calculatedFromProducts.length || Number(defaults.lengthCm) || 20,
+        width: Number(rawPkg.width) > 0 ? Number(rawPkg.width) : calculatedFromProducts.width || Number(defaults.widthCm) || 15,
+        height: Number(rawPkg.height) > 0 ? Number(rawPkg.height) : calculatedFromProducts.height || Number(defaults.heightCm) || 10,
       }
 
       try {
@@ -861,18 +874,22 @@ function validateProduct(body) {
   const mrp = Number(body.mrp)
   const discountedPrice = Number(body.discountedPrice)
   const rawImages = Array.isArray(body.images) ? body.images.filter(Boolean) : []
+  const shippingWeight = Number(body.shippingWeight) > 0 ? Number(body.shippingWeight) : 0.5
+  const shippingLength = Number(body.shippingLength) > 0 ? Number(body.shippingLength) : 20
+  const shippingWidth = Number(body.shippingWidth) > 0 ? Number(body.shippingWidth) : 15
+  const shippingHeight = Number(body.shippingHeight) > 0 ? Number(body.shippingHeight) : 10
   if (!name) return { error: 'Product name is required' }
   if (!categoryId) return { error: 'Category is required' }
   if (!(mrp > 0)) return { error: 'MRP must be greater than 0' }
   if (!(discountedPrice > 0) || discountedPrice > mrp) return { error: 'Discounted price must be > 0 and <= MRP' }
   if (rawImages.length > 5) return { error: 'Maximum 5 images allowed' }
-  const images = rawImages
   return {
     data: {
-      name, categoryId, mrp, discountedPrice, images,
+      name, categoryId, mrp, discountedPrice, images: rawImages,
       description: String(body.description || '').trim(),
       featured: !!body.featured, trending: !!body.trending,
       available: body.available !== false, stock: Number(body.stock) || 0,
+      shippingWeight, shippingLength, shippingWidth, shippingHeight,
     },
   }
 }
