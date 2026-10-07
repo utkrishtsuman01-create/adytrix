@@ -515,6 +515,39 @@ async function handleRoute(request, { params }) {
       return json(saved)
     }
 
+    if (route === '/admin/reset-orders' && method === 'POST') {
+      if (!requireAdmin()) return err('Forbidden', 403)
+
+      const confirmation = String(body.confirmation || '').trim()
+      if (confirmation !== 'RESET ALL') {
+        return err('Confirmation required. Type RESET ALL to continue.', 400)
+      }
+
+      const [ordersResult, paymentsResult, historyResult, customersResult] = await Promise.all([
+        db.collection('orders').deleteMany({}),
+        db.collection('payments').deleteMany({}),
+        db.collection('order_status_history').deleteMany({}),
+        db.collection('users').deleteMany({ role: 'customer' }),
+      ])
+
+      await audit(db, auth.uid, 'store_reset_orders_and_customers', 'store', 'main', {
+        deletedOrders: ordersResult.deletedCount,
+        deletedPayments: paymentsResult.deletedCount,
+        deletedOrderHistory: historyResult.deletedCount,
+        deletedCustomers: customersResult.deletedCount,
+      })
+
+      return json({
+        ok: true,
+        deleted: {
+          orders: ordersResult.deletedCount,
+          payments: paymentsResult.deletedCount,
+          orderHistory: historyResult.deletedCount,
+          customers: customersResult.deletedCount,
+        },
+      })
+    }
+
     if (route === '/admin/stats' && method === 'GET') {
       if (!requireAdmin()) return err('Forbidden', 403)
       const [orders, products, customers] = await Promise.all([
