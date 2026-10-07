@@ -10,6 +10,7 @@ import {
 import { slugify } from '@/lib/format'
 import { rateLimit } from '@/lib/ratelimit'
 import { getSiteConfig, saveSiteConfig } from '@/lib/site-config'
+import { getShiprocketConfig, getPickupAddresses, getCourierOptions, createOrder as createShiprocketOrder, assignAwb, schedulePickup, trackAwb } from '@/lib/shiprocket'
 
 export const runtime = 'nodejs'
 
@@ -99,7 +100,7 @@ async function handleRoute(request, { params }) {
     const db = await getDb()
     const auth = getAuth(request)
     const contentType = request.headers.get('content-type') || ''
-    const isWebhook = route === '/payment/webhook'
+    const isWebhook = route === '/payment/webhook' || route === '/shiprocket/webhook'
     const body = (!isWebhook && method !== 'GET' && method !== 'DELETE' && contentType.includes('application/json'))
       ? await request.json().catch(() => ({}))
       : {}
@@ -342,6 +343,34 @@ async function handleRoute(request, { params }) {
       return json({ order: rest, history: history.map((h) => { const { _id, ...r } = h; return r }) })
     }
 
+    // ---------------- SHIPROCKET WEBHOOK ----------------
+    if (route === '/shiprocket/webhook' && method === 'POST') {
+      const expectedToken = String(process.env.SHIPROCKET_WEBHOOK_TOKEN || '').trim()
+      const receivedToken = String(request.headers.get('x-api-key') || '').trim()
+      if (expectedToken && expectedToken !== receivedToken) return err('Invalid webhook token', 401)
+
+      const raw = await request.text()
+      const payload = JSON.parse(raw || '{}')
+      const sourceOrderId = String(payload.order_id || '').trim()
+      const order = sourceOrderId
+        ? await db.collection('orders').findOne({ orderNumber: sourceOrderId })
+        : null
+
+      if (order) {
+        const shipmentUpdate = {
+          shiprocketStatus: String(payload.shipment_status || payload.current_status || '').trim() || order.shiprocketStatus || null,
+          shiprocketCurrentStatus: String(payload.current_status || '').trim() || order.shiprocketCurrentStatus || null,
+          shiprocketCourier: String(payload.courier_name || '').trim() || order.shiprocketCourier || null,
+          shiprocketAwb: String(payload.awb || '').trim() || order.shiprocketAwb || null,
+          shiprocketEtd: payload.etd || order.shiprocketEtd || null,
+          shiprocketLastWebhookAt: new Date(),
+          updatedAt: new Date(),
+        }
+        await db.collection('orders').updateOne({ id: order.id }, { $set: shipmentUpdate })
+      }
+      return json({ received: true })
+    }
+
     // ---------------- PAYMENTS (Razorpay, server-verified) ----------------
     if (route === '/payment/order' && method === 'POST') {
       if (!auth) return err('Unauthorized', 401)
@@ -501,6 +530,156 @@ async function handleRoute(request, { params }) {
         },
         recentOrders: recent,
       })
+    }
+
+    if (route === '/admin/shiprocket/status' && method === 'GET') {
+      if (!requireAdmin()) return err('Forbidden', 403)
+      try {
+        const cfg = getShiprocketConfig()
+        let pickups = null
+        try { pickups = await getPickupAddresses() } catch (e) { pickups = { error: e.message } }
+        return json({ configured: true, ...cfg, pickups })
+      } catch (e) {
+        return json({ configured: false, error: e.message })
+      }
+    }
+
+    if (route === '/admin/shiprocket/pickup-addresses' && method === 'GET') {
+      if (!requireAdmin()) return err('Forbidden', 403)
+      try {
+        return json(await getPickupAddresses())
+      } catch (e) {
+        return err(e.message, 502)
+      }
+    }
+
+    if (route.match(/^\/admin\/orders\/[^/]+\/shiprocket\/create$/) && method === 'POST') {
+      if (!requireAdmin()) return err('Forbidden', 403)
+      const id = path[2]
+      const order = await db.collection('orders').findOne({ id })
+      if (!order) return err('Order not found', 404)
+      if (order.shiprocketOrderId) return json({ ok: true, alreadyCreated: true, order })
+
+      const pkg = body.package || order.shipmentPackage || {}
+      if (!(Number(pkg.weight) > 0)) return err('Package weight is required.')
+      if (!(Number(pkg.length) > 0) || !(Number(pkg.width) > 0) || !(Number(pkg.height) > 0)) return err('Package dimensions are required.')
+
+      try {
+        const result = await createShiprocketOrder(order, pkg)
+        const shiprocketOrderId = result.order_id || result.data?.order_id
+        const shipmentId = result.shipment_id || result.data?.shipment_id
+        await db.collection('orders').updateOne(
+          { id },
+          {
+            $set: {
+              shiprocketOrderId: shiprocketOrderId ? String(shiprocketOrderId) : null,
+              shiprocketShipmentId: shipmentId ? String(shipmentId) : null,
+              shipmentPackage: {
+                weight: Number(pkg.weight),
+                length: Number(pkg.length),
+                width: Number(pkg.width),
+                height: Number(pkg.height),
+              },
+              shiprocketCreatedAt: new Date(),
+              updatedAt: new Date(),
+            },
+          },
+        )
+        await audit(db, auth.uid, 'shiprocket_order_created', 'order', id, { shiprocketOrderId, shipmentId })
+        return json({ ok: true, result })
+      } catch (e) {
+        return err(e.message, 502)
+      }
+    }
+
+    if (route.match(/^\/admin\/orders\/[^/]+\/shiprocket\/couriers$/) && method === 'POST') {
+      if (!requireAdmin()) return err('Forbidden', 403)
+      const id = path[2]
+      const order = await db.collection('orders').findOne({ id })
+      if (!order) return err('Order not found', 404)
+      if (!order.shiprocketShipmentId) return err('Create the Shiprocket shipment first.')
+      const pkg = body.package || order.shipmentPackage || {}
+      try {
+        const result = await getCourierOptions({
+          deliveryPincode: order.deliveryAddress?.postalCode,
+          weight: pkg.weight,
+          cod: order.paymentMethod === 'cod',
+          declaredValue: order.total,
+          package: pkg,
+        })
+        return json({ ok: true, result })
+      } catch (e) {
+        return err(e.message, 502)
+      }
+    }
+
+    if (route.match(/^\/admin\/orders\/[^/]+\/shiprocket\/ship$/) && method === 'POST') {
+      if (!requireAdmin()) return err('Forbidden', 403)
+      const id = path[2]
+      const order = await db.collection('orders').findOne({ id })
+      if (!order) return err('Order not found', 404)
+      if (!order.shiprocketShipmentId) return err('Create the Shiprocket shipment first.')
+      try {
+        const result = await assignAwb(order.shiprocketShipmentId, body.courierId)
+        const awb = result.response?.data?.awb_code || result.response?.awb_code || result.awb_code || result.awb || null
+        const courier = result.response?.data?.courier_name || result.response?.courier_name || result.courier_name || null
+        await db.collection('orders').updateOne(
+          { id },
+          {
+            $set: {
+              shiprocketAwb: awb ? String(awb) : order.shiprocketAwb || null,
+              shiprocketCourier: courier ? String(courier) : order.shiprocketCourier || null,
+              shiprocketStatus: 'AWB ASSIGNED',
+              shiprocketShippedAt: new Date(),
+              orderStatus: 'shipped',
+              updatedAt: new Date(),
+            },
+          },
+        )
+        await db.collection('order_status_history').insertOne({ id: uuidv4(), orderId: id, status: 'shipped', changedBy: auth.uid, timestamp: new Date() })
+        await audit(db, auth.uid, 'shiprocket_awb_assigned', 'order', id, { awb, courier })
+        return json({ ok: true, result })
+      } catch (e) {
+        return err(e.message, 502)
+      }
+    }
+
+    if (route.match(/^\/admin\/orders\/[^/]+\/shiprocket\/pickup$/) && method === 'POST') {
+      if (!requireAdmin()) return err('Forbidden', 403)
+      const id = path[2]
+      const order = await db.collection('orders').findOne({ id })
+      if (!order) return err('Order not found', 404)
+      if (!order.shiprocketShipmentId) return err('Create the Shiprocket shipment first.')
+      try {
+        const result = await schedulePickup(order.shiprocketShipmentId)
+        await db.collection('orders').updateOne(
+          { id },
+          { $set: { shiprocketPickup: result, shiprocketPickupScheduledAt: new Date(), updatedAt: new Date() } },
+        )
+        await audit(db, auth.uid, 'shiprocket_pickup_scheduled', 'order', id, {})
+        return json({ ok: true, result })
+      } catch (e) {
+        return err(e.message, 502)
+      }
+    }
+
+    if (route.match(/^\/admin\/orders\/[^/]+\/shiprocket\/track$/) && method === 'GET') {
+      if (!requireAdmin()) return err('Forbidden', 403)
+      const id = path[2]
+      const order = await db.collection('orders').findOne({ id })
+      if (!order) return err('Order not found', 404)
+      if (!order.shiprocketAwb) return err('No AWB assigned yet.')
+      try {
+        const result = await trackAwb(order.shiprocketAwb)
+        const tracking = result.tracking_data || result.data?.tracking_data || result
+        await db.collection('orders').updateOne(
+          { id },
+          { $set: { shiprocketTracking: tracking, updatedAt: new Date() } },
+        )
+        return json({ ok: true, tracking })
+      } catch (e) {
+        return err(e.message, 502)
+      }
     }
 
     if (route === '/admin/orders' && method === 'GET') {
