@@ -30,7 +30,19 @@ export default function AdminOrderDetail() {
     fetch(`/api/orders/${id}`).then((r) => r.json()).then((d) => {
       setOrder(d.error ? null : d.order)
       setHistory(d.history || [])
-      if (d.order?.shipmentPackage) setPackageDetails(d.order.shipmentPackage)
+      if (d.order?.shipmentPackage) {
+        setPackageDetails(d.order.shipmentPackage)
+      } else if (d.order?.items?.length) {
+        const derived = d.order.items.reduce((acc, item) => {
+          const qty = Number(item.quantity) > 0 ? Number(item.quantity) : 1
+          acc.weight += (Number(item.shippingWeight) > 0 ? Number(item.shippingWeight) : 0.5) * qty
+          acc.length = Math.max(acc.length, Number(item.shippingLength) > 0 ? Number(item.shippingLength) : 20)
+          acc.width = Math.max(acc.width, Number(item.shippingWidth) > 0 ? Number(item.shippingWidth) : 15)
+          acc.height = Math.max(acc.height, Number(item.shippingHeight) > 0 ? Number(item.shippingHeight) : 10)
+          return acc
+        }, { weight: 0, length: 0, width: 0, height: 0 })
+        setPackageDetails(derived)
+      }
       if (d.order?.shiprocketTracking) setTracking(d.order.shiprocketTracking)
     })
   }, [id])
