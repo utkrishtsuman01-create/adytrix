@@ -560,9 +560,14 @@ async function handleRoute(request, { params }) {
       if (!order) return err('Order not found', 404)
       if (order.shiprocketOrderId) return json({ ok: true, alreadyCreated: true, order })
 
-      const pkg = body.package || order.shipmentPackage || {}
-      if (!(Number(pkg.weight) > 0)) return err('Package weight is required.')
-      if (!(Number(pkg.length) > 0) || !(Number(pkg.width) > 0) || !(Number(pkg.height) > 0)) return err('Package dimensions are required.')
+      const defaults = getShiprocketConfig().defaults || { weightKg: 0.5, lengthCm: 20, widthCm: 15, heightCm: 10 }
+      const rawPkg = body.package || order.shipmentPackage || {}
+      const pkg = {
+        weight: Number(rawPkg.weight) > 0 ? Number(rawPkg.weight) : Number(defaults.weightKg) || 0.5,
+        length: Number(rawPkg.length) > 0 ? Number(rawPkg.length) : Number(defaults.lengthCm) || 20,
+        width: Number(rawPkg.width) > 0 ? Number(rawPkg.width) : Number(defaults.widthCm) || 15,
+        height: Number(rawPkg.height) > 0 ? Number(rawPkg.height) : Number(defaults.heightCm) || 10,
+      }
 
       try {
         const result = await createShiprocketOrder(order, pkg)
