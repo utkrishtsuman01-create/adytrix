@@ -24,6 +24,10 @@ export default function ProductForm({ initial, productId }) {
     discountedPrice: initial?.discountedPrice || '', description: initial?.description || '',
     featured: initial?.featured || false, trending: initial?.trending || false,
     available: initial?.available !== false, stock: initial?.stock ?? 50,
+    shippingWeight: initial?.shippingWeight ?? 0.5,
+    shippingLength: initial?.shippingLength ?? 20,
+    shippingWidth: initial?.shippingWidth ?? 15,
+    shippingHeight: initial?.shippingHeight ?? 10,
     images: initial?.images || [],
   })
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
@@ -53,7 +57,16 @@ export default function ProductForm({ initial, productId }) {
     if (!form.categoryId) { toast.error('Please select a category'); return }
     setSaving(true)
     try {
-      const payload = { ...form, mrp: Number(form.mrp), discountedPrice: Number(form.discountedPrice), stock: Number(form.stock) }
+      const payload = {
+        ...form,
+        mrp: Number(form.mrp),
+        discountedPrice: Number(form.discountedPrice),
+        stock: Number(form.stock),
+        shippingWeight: Number(form.shippingWeight),
+        shippingLength: Number(form.shippingLength),
+        shippingWidth: Number(form.shippingWidth),
+        shippingHeight: Number(form.shippingHeight),
+      }
       const res = await fetch(productId ? `/api/admin/products/${productId}` : '/api/admin/products', {
         method: productId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
       })
@@ -82,6 +95,20 @@ export default function ProductForm({ initial, productId }) {
           <div><Label htmlFor="stock">Stock</Label><Input id="stock" type="number" min="0" value={form.stock} onChange={(e) => set('stock', e.target.value)} className="mt-1.5" /></div>
         </div>
         <div><Label htmlFor="desc">Description</Label><Textarea id="desc" rows={6} value={form.description} onChange={(e) => set('description', e.target.value)} className="mt-1.5" placeholder="Detailed product description..." /></div>
+      </section>
+
+      <section className="rounded-xl border border-border bg-card p-6 space-y-4">
+        <div>
+          <h2 className="font-display text-xl">Shipping / Shiprocket package details</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Enter the packed product weight and dimensions. These values are used when creating Shiprocket shipments.</p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-4">
+          <div><Label htmlFor="shippingWeight">Weight (kg)</Label><Input id="shippingWeight" type="number" step="0.01" min="0.01" required value={form.shippingWeight} onChange={(e) => set('shippingWeight', e.target.value)} className="mt-1.5" /></div>
+          <div><Label htmlFor="shippingLength">Length (cm)</Label><Input id="shippingLength" type="number" step="0.1" min="1" required value={form.shippingLength} onChange={(e) => set('shippingLength', e.target.value)} className="mt-1.5" /></div>
+          <div><Label htmlFor="shippingWidth">Width (cm)</Label><Input id="shippingWidth" type="number" step="0.1" min="1" required value={form.shippingWidth} onChange={(e) => set('shippingWidth', e.target.value)} className="mt-1.5" /></div>
+          <div><Label htmlFor="shippingHeight">Height (cm)</Label><Input id="shippingHeight" type="number" step="0.1" min="1" required value={form.shippingHeight} onChange={(e) => set('shippingHeight', e.target.value)} className="mt-1.5" /></div>
+        </div>
+        <p className="text-xs text-muted-foreground">For existing products, ADYTRIX will use default values until you edit them.</p>
       </section>
 
       <section className="rounded-xl border border-border bg-card p-6">
