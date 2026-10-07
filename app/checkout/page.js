@@ -115,7 +115,7 @@ export default function CheckoutPage() {
             <RadioGroup value={method} onValueChange={setMethod} className="space-y-3">
               <label className="flex items-start gap-3 rounded-lg border border-border p-4 cursor-pointer hover:bg-muted/50">
                 <RadioGroupItem value="razorpay" id="rzp" className="mt-0.5" />
-                <div><div className="flex items-center gap-2 font-medium"><CreditCard className="h-4 w-4 text-[#5f8aa1]" /> Pay Online (Razorpay · Test Mode)</div><p className="text-sm text-muted-foreground mt-1">Secure card / UPI / netbanking payment via Razorpay. Your order is confirmed after payment is verified on our server.</p></div>
+                <div><div className="flex items-center gap-2 font-medium"><CreditCard className="h-4 w-4 text-[#5f8aa1]" /> Pay Online (Razorpay)</div><p className="text-sm text-muted-foreground mt-1">Secure card / UPI / netbanking payment via Razorpay. Your order is confirmed after payment is verified on our server.</p></div>
               </label>
               <label className="flex items-start gap-3 rounded-lg border border-border p-4 cursor-pointer hover:bg-muted/50">
                 <RadioGroupItem value="cod" id="cod" className="mt-0.5" />
