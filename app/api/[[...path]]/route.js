@@ -100,7 +100,7 @@ async function handleRoute(request, { params }) {
     const db = await getDb()
     const auth = getAuth(request)
     const contentType = request.headers.get('content-type') || ''
-    const isWebhook = route === '/payment/webhook' || route === '/shiprocket/webhook'
+    const isWebhook = route === '/payment/webhook' || route === '/logistics/webhook'
     const body = (!isWebhook && method !== 'GET' && method !== 'DELETE' && contentType.includes('application/json'))
       ? await request.json().catch(() => ({}))
       : {}
@@ -344,7 +344,7 @@ async function handleRoute(request, { params }) {
     }
 
     // ---------------- SHIPROCKET WEBHOOK ----------------
-    if (route === '/shiprocket/webhook' && method === 'POST') {
+    if (route === '/logistics/webhook' && method === 'POST') {
       const expectedToken = String(process.env.SHIPROCKET_WEBHOOK_TOKEN || '').trim()
       const receivedToken = String(request.headers.get('x-api-key') || '').trim()
       if (expectedToken && expectedToken !== receivedToken) return err('Invalid webhook token', 401)
