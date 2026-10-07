@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Loader2, Check, Clock, Truck, PackageCheck, XCircle, CreditCard } from 'lucide-react'
+import { Loader2, Check, Clock, Truck, PackageCheck, XCircle, CreditCard, ExternalLink, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import Breadcrumbs from '@/components/site/breadcrumbs'
@@ -83,6 +83,27 @@ export default function OrderDetailPage() {
           </div>
         )}
       </section>
+
+      {order.shiprocketAwb && (
+        <section className="mt-6 rounded-xl border border-border bg-card p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="font-display text-xl">Shipment Tracking</h2>
+              <p className="mt-1 text-sm text-muted-foreground">{order.shiprocketCourier || 'Courier assigned'} · AWB {order.shiprocketAwb}</p>
+            </div>
+            <a
+              href={`https://shiprocket.co/tracking/${encodeURIComponent(order.shiprocketAwb)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-10 items-center justify-center rounded-lg border border-border px-4 text-sm font-medium hover:bg-muted"
+            >
+              Track with Shiprocket <ExternalLink className="ml-2 h-4 w-4" />
+            </a>
+          </div>
+          {order.shiprocketStatus && <p className="mt-4 text-sm"><span className="text-muted-foreground">Current status:</span> <span className="font-medium">{order.shiprocketStatus}</span></p>}
+          {order.shiprocketEtd && <p className="mt-1 text-sm text-muted-foreground">Estimated delivery: {order.shiprocketEtd}</p>}
+        </section>
+      )}
 
       <div className="mt-6 grid md:grid-cols-3 gap-6">
         <section className="md:col-span-2 rounded-xl border border-border bg-card p-6">
