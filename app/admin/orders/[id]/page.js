@@ -67,12 +67,18 @@ export default function AdminOrderDetail() {
     }
   }
 
-  const acceptAndCreate = async () => {
+  const createShipment = async (successMessage = 'Shiprocket shipment created') => {
     const created = await api(`/api/admin/orders/${id}/shiprocket/create`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ package: packageDetails }),
-    })
+    }, successMessage)
+    if (created) load()
+    return created
+  }
+
+  const acceptAndCreate = async () => {
+    const created = await createShipment('Order added to Shiprocket')
     if (!created) return
     await api(`/api/admin/orders/${id}/status`, {
       method: 'PATCH',
@@ -139,6 +145,7 @@ export default function AdminOrderDetail() {
     actions.push({ label: 'Accept & Create Shiprocket Shipment', action: acceptAndCreate, icon: Send })
     actions.push({ label: 'Reject', action: () => changeStatus('rejected'), icon: X, danger: true })
   } else if (order.orderStatus === 'accepted') {
+    if (!order.shiprocketOrderId) actions.push({ label: 'Create Shiprocket Shipment', action: () => createShipment(), icon: Send })
     actions.push({ label: 'Reject', action: () => changeStatus('rejected'), icon: X, danger: true })
   } else if (order.orderStatus === 'shipped') {
     actions.push({ label: 'Mark Completed', action: () => changeStatus('completed'), icon: PackageCheck })
