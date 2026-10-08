@@ -112,6 +112,24 @@ export default function AdminWebsitePage() {
     try {
       const url = await uploadImage(file)
       onDone(url)
+
+      if (key === 'logo') {
+        await new Promise((resolve) => {
+          const img = new Image()
+          img.onload = () => {
+            const maxWidth = 220
+            const maxHeight = 120
+            const scale = Math.min(maxWidth / img.naturalWidth, maxHeight / img.naturalHeight, 1)
+            const width = Math.max(32, Math.round(img.naturalWidth * scale))
+            const height = Math.max(32, Math.round(img.naturalHeight * scale))
+            updateNested('header', { logoWidth: width, logoHeight: height })
+            resolve()
+          }
+          img.onerror = resolve
+          img.src = url
+        })
+      }
+
       toast.success('Image uploaded')
     } catch (e) {
       toast.error(e.message)
@@ -172,7 +190,7 @@ export default function AdminWebsitePage() {
                 />
               ) : <div className="h-28" />}
             </div>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="mt-3 grid gap-3 sm:grid-cols-3">
               <div>
                 <Label>Logo width (px)</Label>
                 <Input
@@ -195,8 +213,19 @@ export default function AdminWebsitePage() {
                   onChange={(e) => updateNested('header', { logoHeight: e.target.value })}
                 />
               </div>
+              <div>
+                <Label>Header top/bottom padding (px)</Label>
+                <Input
+                  className="mt-1.5"
+                  type="number"
+                  min="0"
+                  max="32"
+                  value={config.header?.headerPaddingY ?? 8}
+                  onChange={(e) => updateNested('header', { headerPaddingY: e.target.value })}
+                />
+              </div>
             </div>
-            <p className="mt-2 text-xs text-muted-foreground">Set the width and height independently. Allowed range: 32–240 px.</p>
+            <p className="mt-2 text-xs text-muted-foreground">The header height now follows the logo height plus the padding you choose. Uploading a new logo also suggests a fitting size automatically.</p>
             <div className="mt-3 flex flex-wrap gap-2">
               <Input value={config.header?.logoUrl || ''} onChange={(e) => updateNested('header', { logoUrl: e.target.value })} placeholder="/api/images/..." />
               <label className="inline-flex cursor-pointer items-center rounded-md border border-border px-3 py-2 text-sm hover:bg-muted">
