@@ -57,7 +57,7 @@ export default function Header() {
       )}
 
       <div className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <div className="container flex h-20 items-center justify-between gap-4">
+        <div className="container flex h-24 items-center justify-between gap-4">
           <div className="flex items-center gap-2 lg:hidden">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
@@ -91,11 +91,11 @@ export default function Header() {
             </Sheet>
           </div>
 
-          <Link href="/" className="flex h-20 w-24 shrink-0 items-center justify-start" aria-label="ADYTRIX home">
+          <Link href="/" className="flex h-24 w-32 shrink-0 items-center justify-start" aria-label="ADYTRIX home">
             <img
               src={site?.header?.logoUrl || "/adytrix-logo.jpg"}
               alt="ADYTRIX — Where Tradition Meets Beauty"
-              className="h-16 w-16 object-contain sm:h-[72px] sm:w-[72px]"
+              className="h-20 w-20 object-contain sm:h-[88px] sm:w-[88px]"
             />
           </Link>
 
