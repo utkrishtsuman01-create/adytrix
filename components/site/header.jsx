@@ -58,8 +58,13 @@ export default function Header() {
 
       <div className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div
-          className="container flex items-center justify-between gap-4 py-2"
-          style={{ minHeight: `${Math.max(96, Number(site?.header?.logoHeight) || 88) + 16}px` }}
+          className="container flex items-center justify-between gap-4"
+          style={{
+            boxSizing: 'border-box',
+            height: `${Math.max(64, (Number(site?.header?.logoHeight) || 88) + 2 * (Number(site?.header?.headerPaddingY) || 8))}px`,
+            paddingTop: `${Math.max(0, Number(site?.header?.headerPaddingY) ?? 8)}px`,
+            paddingBottom: `${Math.max(0, Number(site?.header?.headerPaddingY) ?? 8)}px`,
+          }}
         >
           <div className="flex items-center gap-2 lg:hidden">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
