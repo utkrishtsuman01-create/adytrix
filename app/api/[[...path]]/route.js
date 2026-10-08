@@ -480,6 +480,7 @@ async function handleRoute(request, { params }) {
           logoUrl: String(body.header?.logoUrl || '/adytrix-logo.jpg').slice(0, 2000),
           logoWidth: Math.min(240, Math.max(32, Number(body.header?.logoWidth) || 88)),
           logoHeight: Math.min(240, Math.max(32, Number(body.header?.logoHeight) || 88)),
+          headerPaddingY: Math.min(32, Math.max(0, Number(body.header?.headerPaddingY) || 8)),
           navItems: Array.isArray(body.header?.navItems)
             ? body.header.navItems.slice(0, 12).map((n) => ({
                 label: String(n?.label || '').trim().slice(0, 60),
