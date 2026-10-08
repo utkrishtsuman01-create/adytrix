@@ -160,8 +160,43 @@ export default function AdminWebsitePage() {
           <div>
             <Label>Logo</Label>
             <div className="mt-2 overflow-hidden rounded-xl border border-border bg-[#1b1613] p-4">
-              {config.header?.logoUrl ? <img src={config.header.logoUrl} alt="Current logo" className="mx-auto h-28 w-28 object-contain" /> : <div className="h-28" />}
+              {config.header?.logoUrl ? (
+                <img
+                  src={config.header.logoUrl}
+                  alt="Current logo"
+                  className="mx-auto max-h-[240px] max-w-[240px] object-contain"
+                  style={{
+                    width: `${Math.min(240, Math.max(32, Number(config.header?.logoWidth) || 88))}px`,
+                    height: `${Math.min(240, Math.max(32, Number(config.header?.logoHeight) || 88))}px`,
+                  }}
+                />
+              ) : <div className="h-28" />}
             </div>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <div>
+                <Label>Logo width (px)</Label>
+                <Input
+                  className="mt-1.5"
+                  type="number"
+                  min="32"
+                  max="240"
+                  value={config.header?.logoWidth ?? 88}
+                  onChange={(e) => updateNested('header', { logoWidth: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Logo height (px)</Label>
+                <Input
+                  className="mt-1.5"
+                  type="number"
+                  min="32"
+                  max="240"
+                  value={config.header?.logoHeight ?? 88}
+                  onChange={(e) => updateNested('header', { logoHeight: e.target.value })}
+                />
+              </div>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">Set the width and height independently. Allowed range: 32–240 px.</p>
             <div className="mt-3 flex flex-wrap gap-2">
               <Input value={config.header?.logoUrl || ''} onChange={(e) => updateNested('header', { logoUrl: e.target.value })} placeholder="/api/images/..." />
               <label className="inline-flex cursor-pointer items-center rounded-md border border-border px-3 py-2 text-sm hover:bg-muted">
