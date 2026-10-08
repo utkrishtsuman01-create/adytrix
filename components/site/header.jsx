@@ -57,7 +57,10 @@ export default function Header() {
       )}
 
       <div className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <div className="container flex h-24 items-center justify-between gap-4">
+        <div
+          className="container flex items-center justify-between gap-4 py-2"
+          style={{ minHeight: `${Math.max(96, Number(site?.header?.logoHeight) || 88) + 16}px` }}
+        >
           <div className="flex items-center gap-2 lg:hidden">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
@@ -91,11 +94,19 @@ export default function Header() {
             </Sheet>
           </div>
 
-          <Link href="/" className="flex h-24 w-32 shrink-0 items-center justify-start" aria-label="ADYTRIX home">
+          <Link
+            href="/"
+            className="shrink-0 flex items-center justify-start"
+            aria-label="ADYTRIX home"
+            style={{
+              width: `${Math.max(32, Number(site?.header?.logoWidth) || 88)}px`,
+              height: `${Math.max(32, Number(site?.header?.logoHeight) || 88)}px`,
+            }}
+          >
             <img
               src={site?.header?.logoUrl || "/adytrix-logo.jpg"}
               alt="ADYTRIX — Where Tradition Meets Beauty"
-              className="h-20 w-20 object-contain sm:h-[88px] sm:w-[88px]"
+              className="h-full w-full object-contain"
             />
           </Link>
 
