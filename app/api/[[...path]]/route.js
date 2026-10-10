@@ -835,6 +835,32 @@ async function handleRoute(request, { params }) {
       return json({ ok: true, status: next, whatsappReview })
     }
 
+    if (route.match(/^\/admin\/orders\/[^/]+\/review-whatsapp$/) && method === 'POST') {
+      if (!requireAdmin()) return err('Forbidden', 403)
+      const id = path[2]
+      const order = await db.collection('orders').findOne({ id })
+      if (!order) return err('Order not found', 404)
+      if (order.orderStatus !== 'completed') return err('The order must be completed first.')
+      if (order.whatsappReviewOptIn !== true) return err('The customer did not opt in to WhatsApp review messages.')
+
+      const sent = await sendReviewWhatsApp(order)
+      if (sent.status !== 'already_sent') {
+        await db.collection('orders').updateOne({ id }, {
+          $set: {
+            reviewWhatsAppStatus: sent.status,
+            reviewWhatsAppAttemptedAt: new Date(),
+            reviewWhatsAppError: sent.error || null,
+            updatedAt: new Date(),
+            ...(sent.sent ? { reviewWhatsAppSentAt: new Date(), reviewWhatsAppMessageId: sent.messageId || null } : {}),
+          },
+        })
+      }
+      return json({
+        ok: sent.sent,
+        whatsappReview: { status: sent.status, sent: sent.sent, error: sent.error || null },
+      })
+    }
+
     if (route.match(/^\/admin\/orders\/[^/]+\/payment$/) && method === 'PATCH') {
       if (!requireAdmin()) return err('Forbidden', 403)
       const id = path[2]
