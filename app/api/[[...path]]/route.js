@@ -10,7 +10,6 @@ import {
 import { slugify } from '@/lib/format'
 import { rateLimit } from '@/lib/ratelimit'
 import { getSiteConfig, saveSiteConfig } from '@/lib/site-config'
-import { sendReviewWhatsApp } from '@/lib/whatsapp'
 import { getShiprocketConfig, getPickupAddresses, getCourierOptions, createOrder as createShiprocketOrder, assignAwb, schedulePickup, trackAwb } from '@/lib/shiprocket'
 
 export const runtime = 'nodejs'
@@ -254,82 +253,6 @@ async function handleRoute(request, { params }) {
       return json(result)
     }
 
-    // ---------------- DIRECT REVIEW LINKS (secure token, WhatsApp) ----------------
-    if (route.match(/^\/review\/[^/]+$/) && method === 'GET') {
-      const token = String(path[1] || '')
-      if (!/^[a-f0-9]{64}$/i.test(token)) return err('This review link is invalid or expired.', 404)
-      const order = await db.collection('orders').findOne({ reviewAccessToken: token })
-      if (!order || order.orderStatus !== 'completed') return err('This review link is invalid, expired, or the order is not completed yet.', 404)
-
-      const savedReviews = await db.collection('product_reviews').find({ orderId: order.id }).toArray()
-      return json({
-        order: {
-          orderNumber: order.orderNumber,
-          items: (order.items || []).map((item) => ({
-            productId: item.productId,
-            name: item.name,
-            slug: item.slug,
-            image: item.image || '',
-            quantity: item.quantity,
-          })),
-        },
-        reviews: savedReviews.map((review) => ({
-          productId: review.productId,
-          rating: review.rating,
-          comment: review.comment || '',
-          createdAt: review.createdAt,
-        })),
-      })
-    }
-
-    if (route.match(/^\/review\/[^/]+$/) && method === 'POST') {
-      const rl = rateLimit(`review:${clientIp(request)}`, 30, 60000)
-      if (!rl.ok) return err('Too many review attempts. Please try again shortly.', 429)
-      const token = String(path[1] || '')
-      if (!/^[a-f0-9]{64}$/i.test(token)) return err('This review link is invalid or expired.', 404)
-      const order = await db.collection('orders').findOne({ reviewAccessToken: token })
-      if (!order || order.orderStatus !== 'completed') return err('This review link is invalid, expired, or the order is not completed yet.', 404)
-
-      const productId = String(body.productId || '').trim()
-      const rating = Number(body.rating)
-      const comment = String(body.comment || '').trim().slice(0, 1000)
-      if (!productId || !Number.isInteger(rating) || rating < 1 || rating > 5) {
-        return err('Please choose a rating from 1 to 5 stars.')
-      }
-      const item = (order.items || []).find((entry) => String(entry.productId) === productId)
-      if (!item) return err('This product is not part of the order.', 400)
-
-      const reviewKey = `${order.id}:${productId}`
-      if (await db.collection('product_reviews').findOne({ _id: reviewKey })) {
-        return err('You have already reviewed this item from this order.', 409)
-      }
-
-      const now = new Date()
-      const review = {
-        _id: reviewKey,
-        id: uuidv4(),
-        productId,
-        productName: String(item.name || '').slice(0, 200),
-        productSlug: String(item.slug || '').slice(0, 200),
-        productImage: String(item.image || '').slice(0, 3000),
-        orderId: order.id,
-        orderNumber: order.orderNumber,
-        userId: order.userId,
-        customerName: String(order.deliveryAddress?.name || 'Customer').trim().split(' ')[0].slice(0, 50),
-        rating,
-        comment,
-        createdAt: now,
-        updatedAt: now,
-      }
-      try {
-        await db.collection('product_reviews').insertOne(review)
-      } catch (e) {
-        if (e?.code === 11000) return err('You have already reviewed this item from this order.', 409)
-        throw e
-      }
-      return json({ ok: true, review: { productId, rating, comment, createdAt: now } }, 201)
-    }
-
     // ---------------- ORDERS (customer) ----------------
     if (route === '/orders' && method === 'POST') {
       const addr = body.deliveryAddress || {}
@@ -389,9 +312,6 @@ async function handleRoute(request, { params }) {
         paymentMethod: method_,
         paymentReference: null,
         orderStatus: 'pending',
-        whatsappReviewOptIn: body.whatsappReviewOptIn === true,
-        reviewWhatsAppStatus: body.whatsappReviewOptIn === true ? 'waiting_for_completion' : 'opted_out',
-        reviewAccessToken: body.whatsappReviewOptIn === true ? crypto.randomBytes(32).toString('hex') : null,
         deliveryAddress: {
           name: String(addr.name).trim(), phone: String(addr.phone).trim(), email: String(addr.email).trim(),
           address: String(addr.address).trim(), city: String(addr.city).trim(), state: String(addr.state).trim(),
@@ -896,50 +816,7 @@ async function handleRoute(request, { params }) {
       await db.collection('order_status_history').insertOne({ id: uuidv4(), orderId: id, status: next, changedBy: auth.uid, timestamp: now })
       await audit(db, auth.uid, `order_${next}`, 'order', id, { from: order.orderStatus })
 
-      let whatsappReview = null
-      if (next === 'completed' && order.whatsappReviewOptIn === true) {
-        const sent = await sendReviewWhatsApp({ ...order, orderStatus: 'completed' })
-        await db.collection('orders').updateOne({ id }, {
-          $set: {
-            reviewWhatsAppStatus: sent.status,
-            reviewWhatsAppAttemptedAt: new Date(),
-            reviewWhatsAppError: sent.error || null,
-            updatedAt: new Date(),
-            ...(sent.sent && sent.status !== 'already_sent'
-              ? { reviewWhatsAppSentAt: new Date(), reviewWhatsAppMessageId: sent.messageId || null }
-              : {}),
-          },
-        })
-        whatsappReview = { status: sent.status, sent: sent.sent, error: sent.error || null }
-      }
-
-      return json({ ok: true, status: next, whatsappReview })
-    }
-
-    if (route.match(/^\/admin\/orders\/[^/]+\/review-whatsapp$/) && method === 'POST') {
-      if (!requireAdmin()) return err('Forbidden', 403)
-      const id = path[2]
-      const order = await db.collection('orders').findOne({ id })
-      if (!order) return err('Order not found', 404)
-      if (order.orderStatus !== 'completed') return err('The order must be completed first.')
-      if (order.whatsappReviewOptIn !== true) return err('The customer did not opt in to WhatsApp review messages.')
-
-      const sent = await sendReviewWhatsApp(order)
-      if (sent.status !== 'already_sent') {
-        await db.collection('orders').updateOne({ id }, {
-          $set: {
-            reviewWhatsAppStatus: sent.status,
-            reviewWhatsAppAttemptedAt: new Date(),
-            reviewWhatsAppError: sent.error || null,
-            updatedAt: new Date(),
-            ...(sent.sent ? { reviewWhatsAppSentAt: new Date(), reviewWhatsAppMessageId: sent.messageId || null } : {}),
-          },
-        })
-      }
-      return json({
-        ok: sent.sent,
-        whatsappReview: { status: sent.status, sent: sent.sent, error: sent.error || null },
-      })
+      return json({ ok: true, status: next })
     }
 
     if (route.match(/^\/admin\/orders\/[^/]+\/payment$/) && method === 'PATCH') {
