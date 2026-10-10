@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Loader2, Check, Clock, Truck, PackageCheck, XCircle, CreditCard, ExternalLink, RefreshCw, Star, ImagePlus } from 'lucide-react'
+import { Loader2, Check, Clock, Truck, PackageCheck, XCircle, CreditCard, ExternalLink, Star, ImagePlus } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import Breadcrumbs from '@/components/site/breadcrumbs'
