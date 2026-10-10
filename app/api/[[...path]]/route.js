@@ -315,7 +315,7 @@ async function handleRoute(request, { params }) {
         orderId: order.id,
         orderNumber: order.orderNumber,
         userId: order.userId,
-        customerName: String(order.deliveryAddress?.name || 'Customer').split(/\\s+/)[0].slice(0, 50),
+        customerName: String(order.deliveryAddress?.name || 'Customer').trim().split(' ')[0].slice(0, 50),
         rating,
         comment,
         createdAt: now,
@@ -888,7 +888,11 @@ async function handleRoute(request, { params }) {
       const allowed = TRANSITIONS[order.orderStatus] || []
       if (!allowed.includes(next)) return err(`Cannot change status from ${order.orderStatus} to ${next}.`)
       const now = new Date()
-      await db.collection('orders').updateOne({ id }, { $set: { orderStatus: next, updatedAt: now } })
+      const statusUpdate = await db.collection('orders').updateOne(
+        { id, orderStatus: order.orderStatus },
+        { $set: { orderStatus: next, updatedAt: now } },
+      )
+      if (!statusUpdate.modifiedCount) return err('Order status changed. Refresh and try again.', 409)
       await db.collection('order_status_history').insertOne({ id: uuidv4(), orderId: id, status: next, changedBy: auth.uid, timestamp: now })
       await audit(db, auth.uid, `order_${next}`, 'order', id, { from: order.orderStatus })
 
