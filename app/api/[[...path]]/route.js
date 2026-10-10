@@ -254,6 +254,82 @@ async function handleRoute(request, { params }) {
       return json(result)
     }
 
+    // ---------------- DIRECT REVIEW LINKS (secure token, WhatsApp) ----------------
+    if (route.match(/^\/review\/[^/]+$/) && method === 'GET') {
+      const token = String(path[1] || '')
+      if (!/^[a-f0-9]{64}$/i.test(token)) return err('This review link is invalid or expired.', 404)
+      const order = await db.collection('orders').findOne({ reviewAccessToken: token })
+      if (!order || order.orderStatus !== 'completed') return err('This review link is invalid, expired, or the order is not completed yet.', 404)
+
+      const savedReviews = await db.collection('product_reviews').find({ orderId: order.id }).toArray()
+      return json({
+        order: {
+          orderNumber: order.orderNumber,
+          items: (order.items || []).map((item) => ({
+            productId: item.productId,
+            name: item.name,
+            slug: item.slug,
+            image: item.image || '',
+            quantity: item.quantity,
+          })),
+        },
+        reviews: savedReviews.map((review) => ({
+          productId: review.productId,
+          rating: review.rating,
+          comment: review.comment || '',
+          createdAt: review.createdAt,
+        })),
+      })
+    }
+
+    if (route.match(/^\/review\/[^/]+$/) && method === 'POST') {
+      const rl = rateLimit(`review:${clientIp(request)}`, 30, 60000)
+      if (!rl.ok) return err('Too many review attempts. Please try again shortly.', 429)
+      const token = String(path[1] || '')
+      if (!/^[a-f0-9]{64}$/i.test(token)) return err('This review link is invalid or expired.', 404)
+      const order = await db.collection('orders').findOne({ reviewAccessToken: token })
+      if (!order || order.orderStatus !== 'completed') return err('This review link is invalid, expired, or the order is not completed yet.', 404)
+
+      const productId = String(body.productId || '').trim()
+      const rating = Number(body.rating)
+      const comment = String(body.comment || '').trim().slice(0, 1000)
+      if (!productId || !Number.isInteger(rating) || rating < 1 || rating > 5) {
+        return err('Please choose a rating from 1 to 5 stars.')
+      }
+      const item = (order.items || []).find((entry) => String(entry.productId) === productId)
+      if (!item) return err('This product is not part of the order.', 400)
+
+      const reviewKey = `${order.id}:${productId}`
+      if (await db.collection('product_reviews').findOne({ _id: reviewKey })) {
+        return err('You have already reviewed this item from this order.', 409)
+      }
+
+      const now = new Date()
+      const review = {
+        _id: reviewKey,
+        id: uuidv4(),
+        productId,
+        productName: String(item.name || '').slice(0, 200),
+        productSlug: String(item.slug || '').slice(0, 200),
+        productImage: String(item.image || '').slice(0, 3000),
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        userId: order.userId,
+        customerName: String(order.deliveryAddress?.name || 'Customer').split(/\\s+/)[0].slice(0, 50),
+        rating,
+        comment,
+        createdAt: now,
+        updatedAt: now,
+      }
+      try {
+        await db.collection('product_reviews').insertOne(review)
+      } catch (e) {
+        if (e?.code === 11000) return err('You have already reviewed this item from this order.', 409)
+        throw e
+      }
+      return json({ ok: true, review: { productId, rating, comment, createdAt: now } }, 201)
+    }
+
     // ---------------- ORDERS (customer) ----------------
     if (route === '/orders' && method === 'POST') {
       const addr = body.deliveryAddress || {}
