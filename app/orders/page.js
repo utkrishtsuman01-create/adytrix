@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Loader2, Package, ChevronRight } from 'lucide-react'
+import { Loader2, Package, ChevronRight, Star, MessageCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { inr } from '@/lib/format'
 
@@ -68,16 +68,22 @@ export default function OrdersPage() {
               </div>
             </div>
           </Link>
-          {o.orderStatus === 'completed' && (
-            <div className="border-t border-border px-5 py-3">
-              <Link
-                href={`/orders/${o.id}#items`}
-                className="inline-flex items-center gap-2 text-sm font-medium text-[#5f8aa1] hover:underline"
-              >
-                Review your items <ChevronRight className="h-4 w-4" />
-              </Link>
-            </div>
-          )}
+          <div className="flex flex-wrap items-center gap-4 border-t border-border px-5 py-3">
+            <Link
+              href={`/orders/${o.id}#items`}
+              className="inline-flex items-center gap-2 text-sm font-medium text-[#5f8aa1] hover:underline"
+            >
+              <Star className="h-4 w-4" /> Review your items
+            </Link>
+            <a
+              href={`https://wa.me/918240720540?text=${encodeURIComponent(`Hi ADYTRIX, I need help with order #${o.orderNumber}.`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm font-medium text-[#128C7E] hover:underline"
+            >
+              <MessageCircle className="h-4 w-4" /> Support on WhatsApp
+            </a>
+          </div>
           </div>
         ))}
       </div>
