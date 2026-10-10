@@ -158,6 +158,7 @@ export default function AdminOrderDetail() {
     actions.push({ label: 'Reject', action: () => changeStatus('rejected'), icon: X, danger: true })
   } else if (order.orderStatus === 'accepted') {
     if (!order.shiprocketOrderId) actions.push({ label: 'Create Shiprocket Shipment', action: () => createShipment(), icon: Send })
+    actions.push({ label: 'Mark Completed', action: () => changeStatus('completed'), icon: PackageCheck })
     actions.push({ label: 'Reject', action: () => changeStatus('rejected'), icon: X, danger: true })
   } else if (order.orderStatus === 'shipped') {
     actions.push({ label: 'Mark Completed', action: () => changeStatus('completed'), icon: PackageCheck })
