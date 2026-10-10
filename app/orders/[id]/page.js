@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Loader2, Check, Clock, Truck, PackageCheck, XCircle, CreditCard, ExternalLink, RefreshCw } from 'lucide-react'
+import { Loader2, Check, Clock, Truck, PackageCheck, XCircle, CreditCard, ExternalLink, RefreshCw, Star } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import Breadcrumbs from '@/components/site/breadcrumbs'
@@ -23,13 +23,21 @@ export default function OrderDetailPage() {
   const id = params?.id
   const [order, setOrder] = useState(undefined)
   const [paying, setPaying] = useState(false)
+  const [reviews, setReviews] = useState([])
+  const [reviewDrafts, setReviewDrafts] = useState({})
+  const [reviewingProduct, setReviewingProduct] = useState('')
 
   const loadOrder = useCallback(() => {
     if (!id) return
     fetch(`/api/orders/${id}`).then((r) => {
       if (r.status === 401) { router.replace(`/login?redirect=/orders/${id}`); return null }
       return r.json()
-    }).then((d) => { if (d) setOrder(d.error ? null : d.order) })
+    }).then((d) => {
+      if (d) {
+        setOrder(d.error ? null : d.order)
+        setReviews(d.reviews || [])
+      }
+    })
   }, [id, router])
 
   useEffect(() => { loadOrder() }, [loadOrder])
@@ -42,6 +50,33 @@ export default function OrderDetailPage() {
       else if (result.status === 'dismissed') toast('Payment cancelled.')
       else toast.error('Payment not completed.')
     } catch (e) { toast.error(e.message || 'Could not start payment') } finally { setPaying(false) }
+  }
+
+  const updateReviewDraft = (productId, patch) => {
+    setReviewDrafts((prev) => ({
+      ...prev,
+      [productId]: { rating: 5, comment: '', ...(prev[productId] || {}), ...patch },
+    }))
+  }
+
+  const submitReview = async (productId) => {
+    const draft = reviewDrafts[productId] || { rating: 5, comment: '' }
+    setReviewingProduct(productId)
+    try {
+      const res = await fetch(`/api/orders/${order.id}/reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, rating: draft.rating, comment: draft.comment }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Could not submit your review')
+      setReviews((prev) => [...prev.filter((review) => review.productId !== productId), data.review])
+      toast.success('Thanks! Your review has been submitted.')
+    } catch (e) {
+      toast.error(e.message || 'Could not submit your review')
+    } finally {
+      setReviewingProduct('')
+    }
   }
 
   if (order === undefined) return <div className="container py-20 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></div>
@@ -109,13 +144,73 @@ export default function OrderDetailPage() {
         <section className="md:col-span-2 rounded-xl border border-border bg-card p-6">
           <h2 className="font-display text-xl mb-4">Items</h2>
           <div className="space-y-4">
-            {order.items.map((it, i) => (
-              <div key={i} className="flex gap-4">
-                <Link href={`/products/${it.slug}`} className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#f3ece0]">{it.image ? <img src={it.image} alt={it.name} className="h-full w-full object-cover" /> : null}</Link>
-                <div className="flex-1"><Link href={`/products/${it.slug}`} className="font-medium hover:text-[#B8862F] line-clamp-1">{it.name}</Link><p className="text-sm text-muted-foreground">Qty {it.quantity} x {inr(it.price)}</p></div>
-                <div className="font-semibold">{inr(it.price * it.quantity)}</div>
-              </div>
-            ))}
+            {order.items.map((it, i) => {
+              const review = reviews.find((entry) => entry.productId === it.productId)
+              const draft = reviewDrafts[it.productId] || { rating: 5, comment: '' }
+              return (
+                <div key={`${it.productId || it.slug}-${i}`} className="space-y-3">
+                  <div className="flex gap-4">
+                    <Link href={`/products/${it.slug}`} className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#f3ece0]">{it.image ? <img src={it.image} alt={it.name} className="h-full w-full object-cover" /> : null}</Link>
+                    <div className="flex-1"><Link href={`/products/${it.slug}`} className="font-medium hover:text-[#5f8aa1] line-clamp-1">{it.name}</Link><p className="text-sm text-muted-foreground">Qty {it.quantity} x {inr(it.price)}</p></div>
+                    <div className="font-semibold">{inr(it.price * it.quantity)}</div>
+                  </div>
+
+                  {order.orderStatus === 'completed' && (
+                    <div className="ml-0 sm:ml-20 rounded-lg border border-border bg-background p-4">
+                      {review ? (
+                        <div>
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <p className="font-medium text-sm">Your review</p>
+                            <span className="text-xs font-medium text-green-700">Review submitted</span>
+                          </div>
+                          <div className="mt-2 flex items-center gap-1" aria-label={`${review.rating} out of 5 stars`}>
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star key={star} className={`h-4 w-4 ${star <= review.rating ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground'}`} />
+                            ))}
+                          </div>
+                          {review.comment ? <p className="mt-2 whitespace-pre-line text-sm text-muted-foreground">{review.comment}</p> : <p className="mt-2 text-sm text-muted-foreground">You submitted a rating without a written comment.</p>}
+                        </div>
+                      ) : (
+                        <div>
+                          <p className="font-medium">Rate this product</p>
+                          <p className="mt-1 text-xs text-muted-foreground">Your order is complete. Share your experience with this item.</p>
+                          <div className="mt-3 flex items-center gap-1" role="group" aria-label="Choose a star rating">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <button
+                                key={star}
+                                type="button"
+                                aria-label={`${star} star${star === 1 ? '' : 's'}`}
+                                aria-pressed={draft.rating === star}
+                                onClick={() => updateReviewDraft(it.productId, { rating: star })}
+                                className="rounded p-1 transition-transform hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f8aa1]"
+                              >
+                                <Star className={`h-6 w-6 ${star <= draft.rating ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground'}`} />
+                              </button>
+                            ))}
+                            <span className="ml-2 text-xs text-muted-foreground">{draft.rating}/5</span>
+                          </div>
+                          <textarea
+                            value={draft.comment}
+                            maxLength={1000}
+                            rows={3}
+                            onChange={(e) => updateReviewDraft(it.productId, { comment: e.target.value })}
+                            placeholder="Write a review (optional)"
+                            className="mt-3 w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#5f8aa1]"
+                          />
+                          <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+                            <span className="text-xs text-muted-foreground">{draft.comment.length}/1000 characters</span>
+                            <Button onClick={() => submitReview(it.productId)} disabled={reviewingProduct === it.productId}>
+                              {reviewingProduct === it.productId ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Star className="mr-2 h-4 w-4" />}
+                              Submit review
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
           <div className="mt-6 border-t border-border pt-4 space-y-2 text-sm">
             <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{inr(order.subtotal)}</span></div>
