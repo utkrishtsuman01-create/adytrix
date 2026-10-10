@@ -229,7 +229,7 @@ export default function OrderDetailPage() {
                             {draft.imageFile && (
                               <p className="mt-1 text-xs text-muted-foreground">Selected: {draft.imageFile.name}</p>
                             )}
-                            <p className="mt-1 text-xs text-muted-foreground">JPG, PNG or WEBP · up to 5 MB</p>
+                            <p className="mt-1 text-xs text-muted-foreground">JPG, PNG or WEBP · up to 4 MB</p>
                           </div>
                           <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
                             <span className="text-xs text-muted-foreground">{draft.comment.length}/1000 characters</span>
