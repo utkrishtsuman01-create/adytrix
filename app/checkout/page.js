@@ -20,6 +20,7 @@ export default function CheckoutPage() {
   const [placing, setPlacing] = useState(false)
   const [method, setMethod] = useState('razorpay')
   const [guestPassword, setGuestPassword] = useState('')
+  const [whatsappReviewOptIn, setWhatsappReviewOptIn] = useState(false)
   const [form, setForm] = useState({ name: '', phone: '', email: '', address: '', city: '', state: '', postalCode: '', country: 'India' })
 
   useEffect(() => {
@@ -44,6 +45,7 @@ export default function CheckoutPage() {
           items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
           deliveryAddress: form,
           paymentMethod: method,
+          whatsappReviewOptIn,
           ...(!user ? { password: guestPassword } : {}),
         }),
       })
@@ -108,6 +110,23 @@ export default function CheckoutPage() {
               <div><Label htmlFor="postalCode">Postal Code</Label><Input id="postalCode" required value={form.postalCode} onChange={set('postalCode')} className="mt-1.5" /></div>
               <div><Label htmlFor="country">Country</Label><Input id="country" value={form.country} onChange={set('country')} className="mt-1.5" /></div>
             </div>
+          </section>
+
+          <section className="rounded-xl border border-border bg-card p-6">
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                checked={whatsappReviewOptIn}
+                onChange={(e) => setWhatsappReviewOptIn(e.target.checked)}
+                className="mt-1 h-4 w-4 accent-[#5f8aa1]"
+              />
+              <span>
+                <span className="block font-medium">WhatsApp review request (optional)</span>
+                <span className="mt-1 block text-sm text-muted-foreground">
+                  I agree to receive one automated WhatsApp message from ADYTRIX at the phone number above when this order is completed, with a link to review my purchased items.
+                </span>
+              </span>
+            </label>
           </section>
 
           <section className="rounded-xl border border-border bg-card p-6">
