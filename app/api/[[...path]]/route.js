@@ -315,6 +315,7 @@ async function handleRoute(request, { params }) {
         orderStatus: 'pending',
         whatsappReviewOptIn: body.whatsappReviewOptIn === true,
         reviewWhatsAppStatus: body.whatsappReviewOptIn === true ? 'waiting_for_completion' : 'opted_out',
+        reviewAccessToken: body.whatsappReviewOptIn === true ? crypto.randomBytes(32).toString('hex') : null,
         deliveryAddress: {
           name: String(addr.name).trim(), phone: String(addr.phone).trim(), email: String(addr.email).trim(),
           address: String(addr.address).trim(), city: String(addr.city).trim(), state: String(addr.state).trim(),
