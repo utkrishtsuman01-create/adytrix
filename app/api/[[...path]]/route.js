@@ -336,6 +336,58 @@ async function handleRoute(request, { params }) {
       return json({ orders: docs.map((d) => { const { _id, ...r } = d; return r }) })
     }
 
+    if (route.match(/^\/orders\/[^/]+\/reviews$/) && method === 'POST') {
+      if (!auth || auth.role !== 'customer') return err('Please log in as a customer to submit a review.', 401)
+
+      const id = path[1]
+      const order = await db.collection('orders').findOne({ id })
+      if (!order) return err('Order not found', 404)
+      if (order.userId !== auth.uid) return err('Forbidden', 403)
+      if (order.orderStatus !== 'completed') return err('You can review items after the order is completed.', 400)
+
+      const productId = String(body.productId || '').trim()
+      const rating = Number(body.rating)
+      const comment = String(body.comment || '').trim().slice(0, 1000)
+      if (!productId || !Number.isInteger(rating) || rating < 1 || rating > 5) {
+        return err('Please choose a rating from 1 to 5 stars.')
+      }
+
+      const item = (order.items || []).find((it) => String(it.productId) === productId)
+      if (!item) return err('This product is not part of the order.', 400)
+
+      const reviewKey = `${order.id}:${productId}`
+      const existing = await db.collection('product_reviews').findOne({ _id: reviewKey })
+      if (existing) return err('You have already reviewed this item from this order.', 409)
+
+      const now = new Date()
+      const review = {
+        _id: reviewKey,
+        id: uuidv4(),
+        productId,
+        productName: String(item.name || '').slice(0, 200),
+        productSlug: String(item.slug || '').slice(0, 200),
+        productImage: String(item.image || '').slice(0, 3000),
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        userId: auth.uid,
+        customerName: String(order.deliveryAddress?.name || auth.name || 'Customer').slice(0, 100),
+        rating,
+        comment,
+        createdAt: now,
+        updatedAt: now,
+      }
+
+      try {
+        await db.collection('product_reviews').insertOne(review)
+      } catch (e) {
+        if (e?.code === 11000) return err('You have already reviewed this item from this order.', 409)
+        throw e
+      }
+
+      const { _id, ...publicReview } = review
+      return json({ ok: true, review: publicReview }, 201)
+    }
+
     if (route.startsWith('/orders/') && method === 'GET') {
       if (!auth) return err('Unauthorized', 401)
       const id = path[1]
@@ -343,8 +395,13 @@ async function handleRoute(request, { params }) {
       if (!order) return err('Order not found', 404)
       if (order.userId !== auth.uid && auth.role !== 'admin') return err('Forbidden', 403)
       const history = await db.collection('order_status_history').find({ orderId: id }).sort({ timestamp: 1 }).toArray()
+      const storedReviews = await db.collection('product_reviews').find({ orderId: id, userId: auth.uid }).sort({ createdAt: 1 }).toArray()
       const { _id, ...rest } = order
-      return json({ order: rest, history: history.map((h) => { const { _id, ...r } = h; return r }) })
+      return json({
+        order: rest,
+        history: history.map((h) => { const { _id, ...r } = h; return r }),
+        reviews: storedReviews.map((review) => { const { _id, ...r } = review; return r }),
+      })
     }
 
     // ---------------- SHIPROCKET WEBHOOK ----------------
