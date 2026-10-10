@@ -814,7 +814,25 @@ async function handleRoute(request, { params }) {
       await db.collection('orders').updateOne({ id }, { $set: { orderStatus: next, updatedAt: now } })
       await db.collection('order_status_history').insertOne({ id: uuidv4(), orderId: id, status: next, changedBy: auth.uid, timestamp: now })
       await audit(db, auth.uid, `order_${next}`, 'order', id, { from: order.orderStatus })
-      return json({ ok: true, status: next })
+
+      let whatsappReview = null
+      if (next === 'completed' && order.whatsappReviewOptIn === true) {
+        const sent = await sendReviewWhatsApp({ ...order, orderStatus: 'completed' })
+        await db.collection('orders').updateOne({ id }, {
+          $set: {
+            reviewWhatsAppStatus: sent.status,
+            reviewWhatsAppAttemptedAt: new Date(),
+            reviewWhatsAppError: sent.error || null,
+            updatedAt: new Date(),
+            ...(sent.sent && sent.status !== 'already_sent'
+              ? { reviewWhatsAppSentAt: new Date(), reviewWhatsAppMessageId: sent.messageId || null }
+              : {}),
+          },
+        })
+        whatsappReview = { status: sent.status, sent: sent.sent, error: sent.error || null }
+      }
+
+      return json({ ok: true, status: next, whatsappReview })
     }
 
     if (route.match(/^\/admin\/orders\/[^/]+\/payment$/) && method === 'PATCH') {
