@@ -10,6 +10,7 @@ import {
 import { slugify } from '@/lib/format'
 import { rateLimit } from '@/lib/ratelimit'
 import { getSiteConfig, saveSiteConfig } from '@/lib/site-config'
+import { sendReviewWhatsApp } from '@/lib/whatsapp'
 import { getShiprocketConfig, getPickupAddresses, getCourierOptions, createOrder as createShiprocketOrder, assignAwb, schedulePickup, trackAwb } from '@/lib/shiprocket'
 
 export const runtime = 'nodejs'
@@ -312,6 +313,8 @@ async function handleRoute(request, { params }) {
         paymentMethod: method_,
         paymentReference: null,
         orderStatus: 'pending',
+        whatsappReviewOptIn: body.whatsappReviewOptIn === true,
+        reviewWhatsAppStatus: body.whatsappReviewOptIn === true ? 'waiting_for_completion' : 'opted_out',
         deliveryAddress: {
           name: String(addr.name).trim(), phone: String(addr.phone).trim(), email: String(addr.email).trim(),
           address: String(addr.address).trim(), city: String(addr.city).trim(), state: String(addr.state).trim(),
