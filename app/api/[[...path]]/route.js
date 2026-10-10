@@ -48,7 +48,7 @@ function clientIp(request) {
 // Allowed order status transitions (server-enforced)
 const TRANSITIONS = {
   pending: ['accepted', 'rejected'],
-  accepted: ['shipped', 'rejected'],
+  accepted: ['shipped', 'completed', 'rejected'],
   shipped: ['completed'],
   completed: [],
   rejected: [],
@@ -365,8 +365,6 @@ async function handleRoute(request, { params }) {
       const order = await db.collection('orders').findOne({ id })
       if (!order) return err('Order not found', 404)
       if (order.userId !== auth.uid) return err('Forbidden', 403)
-      if (order.orderStatus !== 'completed') return err('You can review items after the order is completed.', 400)
-
       let reviewInput = body
       let imageFile = null
       if (contentType.includes('multipart/form-data')) {
