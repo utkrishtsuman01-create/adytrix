@@ -98,9 +98,19 @@ export default function OrderDetailPage() {
   return (
     <div className="container max-w-4xl py-8">
       <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'My Orders', href: '/orders' }, { label: `#${order.orderNumber}` }]} />
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
-        <h1 className="font-display text-3xl">Order #{order.orderNumber}</h1>
-        <span className="text-sm text-muted-foreground">{new Date(order.createdAt).toLocaleString('en-IN')}</span>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="font-display text-3xl">Order #{order.orderNumber}</h1>
+          <span className="text-sm text-muted-foreground">{new Date(order.createdAt).toLocaleString('en-IN')}</span>
+        </div>
+        <a
+          href={`https://wa.me/918240720540?text=${encodeURIComponent(`Hi ADYTRIX, I need help with order #${order.orderNumber}.`)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex h-10 items-center justify-center rounded-lg border border-[#25D366] px-4 text-sm font-medium text-[#128C7E] transition hover:bg-[#e8fff3]"
+        >
+          Support on WhatsApp
+        </a>
       </div>
 
       {/* Tracking */}
@@ -165,8 +175,7 @@ export default function OrderDetailPage() {
                     <div className="font-semibold">{inr(it.price * it.quantity)}</div>
                   </div>
 
-                  {order.orderStatus === 'completed' && (
-                    <div className="ml-0 sm:ml-20 rounded-lg border border-border bg-background p-4">
+                  <div className="ml-0 sm:ml-20 rounded-lg border border-border bg-background p-4">
                       {review ? (
                         <div>
                           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -184,7 +193,7 @@ export default function OrderDetailPage() {
                       ) : (
                         <div>
                           <p className="font-medium">Rate this product</p>
-                          <p className="mt-1 text-xs text-muted-foreground">Your order is complete. Share your experience with this item.</p>
+                          <p className="mt-1 text-xs text-muted-foreground">Share your experience with this item from your order.</p>
                           <div className="mt-3 flex items-center gap-1" role="group" aria-label="Choose a star rating">
                             {[1, 2, 3, 4, 5].map((star) => (
                               <button
@@ -241,7 +250,6 @@ export default function OrderDetailPage() {
                         </div>
                       )}
                     </div>
-                  )}
                 </div>
               )
             })}
