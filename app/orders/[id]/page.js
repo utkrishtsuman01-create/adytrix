@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Loader2, Check, Clock, Truck, PackageCheck, XCircle, CreditCard, ExternalLink, RefreshCw, Star } from 'lucide-react'
+import { Loader2, Check, Clock, Truck, PackageCheck, XCircle, CreditCard, ExternalLink, RefreshCw, Star, ImagePlus } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import Breadcrumbs from '@/components/site/breadcrumbs'
@@ -55,18 +55,28 @@ export default function OrderDetailPage() {
   const updateReviewDraft = (productId, patch) => {
     setReviewDrafts((prev) => ({
       ...prev,
-      [productId]: { rating: 5, comment: '', ...(prev[productId] || {}), ...patch },
+      [productId]: { rating: 5, comment: '', imageFile: null, ...(prev[productId] || {}), ...patch },
     }))
   }
 
   const submitReview = async (productId) => {
-    const draft = reviewDrafts[productId] || { rating: 5, comment: '' }
+    const draft = reviewDrafts[productId] || { rating: 5, comment: '', imageFile: null }
+    if (!draft.comment?.trim()) {
+      toast.error('Please leave a comment with your review.')
+      return
+    }
+
     setReviewingProduct(productId)
     try {
+      const formData = new FormData()
+      formData.append('productId', productId)
+      formData.append('rating', String(draft.rating))
+      formData.append('comment', draft.comment.trim())
+      if (draft.imageFile) formData.append('image', draft.imageFile)
+
       const res = await fetch(`/api/orders/${order.id}/reviews`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId, rating: draft.rating, comment: draft.comment }),
+        body: formData,
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Could not submit your review')
@@ -168,7 +178,8 @@ export default function OrderDetailPage() {
                               <Star key={star} className={`h-4 w-4 ${star <= review.rating ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground'}`} />
                             ))}
                           </div>
-                          {review.comment ? <p className="mt-2 whitespace-pre-line text-sm text-muted-foreground">{review.comment}</p> : <p className="mt-2 text-sm text-muted-foreground">You submitted a rating without a written comment.</p>}
+                          <p className="mt-2 whitespace-pre-line text-sm text-muted-foreground">{review.comment}</p>
+                          {review.reviewImageUrl && <img src={review.reviewImageUrl} alt="Your review upload" className="mt-3 max-h-48 rounded-lg border border-border object-contain" />}
                         </div>
                       ) : (
                         <div>
@@ -189,17 +200,40 @@ export default function OrderDetailPage() {
                             ))}
                             <span className="ml-2 text-xs text-muted-foreground">{draft.rating}/5</span>
                           </div>
+                          <label className="mt-3 block text-sm font-medium" htmlFor={`review-comment-${it.productId}`}>Your comment <span className="text-destructive">*</span></label>
                           <textarea
+                            id={`review-comment-${it.productId}`}
                             value={draft.comment}
+                            required
                             maxLength={1000}
                             rows={3}
                             onChange={(e) => updateReviewDraft(it.productId, { comment: e.target.value })}
-                            placeholder="Write a review (optional)"
-                            className="mt-3 w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#5f8aa1]"
+                            placeholder="Tell us what you liked or what could be better…"
+                            className="mt-1.5 w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#5f8aa1]"
                           />
+                          <div className="mt-3">
+                            <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+                              <ImagePlus className="h-4 w-4 text-[#5f8aa1]" />
+                              Add one photo (optional)
+                              <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                className="sr-only"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0] || null
+                                  updateReviewDraft(it.productId, { imageFile: file })
+                                  e.target.value = ''
+                                }}
+                              />
+                            </label>
+                            {draft.imageFile && (
+                              <p className="mt-1 text-xs text-muted-foreground">Selected: {draft.imageFile.name}</p>
+                            )}
+                            <p className="mt-1 text-xs text-muted-foreground">JPG, PNG or WEBP · up to 5 MB</p>
+                          </div>
                           <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
                             <span className="text-xs text-muted-foreground">{draft.comment.length}/1000 characters</span>
-                            <Button onClick={() => submitReview(it.productId)} disabled={reviewingProduct === it.productId}>
+                            <Button onClick={() => submitReview(it.productId)} disabled={reviewingProduct === it.productId || !draft.comment.trim()}>
                               {reviewingProduct === it.productId ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Star className="mr-2 h-4 w-4" />}
                               Submit review
                             </Button>
