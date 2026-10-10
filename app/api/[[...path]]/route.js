@@ -206,6 +206,28 @@ async function handleRoute(request, { params }) {
       return json({ categories: cats.map((c) => { const { _id, ...r } = c; return r }) })
     }
 
+    if (route === '/reviews' && method === 'GET') {
+      const docs = await db.collection('product_reviews')
+        .find({ rating: 5, comment: { $type: 'string', $ne: '' } })
+        .sort({ createdAt: -1 })
+        .limit(8)
+        .toArray()
+      return json({
+        reviews: docs.map((review) => ({
+          id: review.id,
+          productId: review.productId,
+          productName: review.productName,
+          productSlug: review.productSlug,
+          productImage: review.productImage || '',
+          reviewImageUrl: review.reviewImageUrl || '',
+          customerName: String(review.customerName || 'Customer').trim().split(' ')[0],
+          rating: review.rating,
+          comment: review.comment,
+          createdAt: review.createdAt,
+        })),
+      })
+    }
+
     if (route === '/products' && method === 'GET') {
       const q = { available: true }
       const category = qp.get('category')
@@ -345,12 +367,29 @@ async function handleRoute(request, { params }) {
       if (order.userId !== auth.uid) return err('Forbidden', 403)
       if (order.orderStatus !== 'completed') return err('You can review items after the order is completed.', 400)
 
-      const productId = String(body.productId || '').trim()
-      const rating = Number(body.rating)
-      const comment = String(body.comment || '').trim().slice(0, 1000)
+      let reviewInput = body
+      let imageFile = null
+      if (contentType.includes('multipart/form-data')) {
+        const form = await request.formData().catch(() => null)
+        if (!form) return err('Invalid review form data.')
+        reviewInput = {
+          productId: form.get('productId'),
+          rating: form.get('rating'),
+          comment: form.get('comment'),
+        }
+        const candidate = form.get('image')
+        if (candidate && typeof candidate === 'object' && typeof candidate.arrayBuffer === 'function' && candidate.size > 0) {
+          imageFile = candidate
+        }
+      }
+
+      const productId = String(reviewInput.productId || '').trim()
+      const rating = Number(reviewInput.rating)
+      const comment = String(reviewInput.comment || '').trim().slice(0, 1000)
       if (!productId || !Number.isInteger(rating) || rating < 1 || rating > 5) {
         return err('Please choose a rating from 1 to 5 stars.')
       }
+      if (!comment) return err('Please leave a comment with your review.')
 
       const item = (order.items || []).find((it) => String(it.productId) === productId)
       if (!item) return err('This product is not part of the order.', 400)
@@ -358,6 +397,27 @@ async function handleRoute(request, { params }) {
       const reviewKey = `${order.id}:${productId}`
       const existing = await db.collection('product_reviews').findOne({ _id: reviewKey })
       if (existing) return err('You have already reviewed this item from this order.', 409)
+
+      let reviewImageUrl = ''
+      if (imageFile) {
+        const type = String(imageFile.type || '').toLowerCase()
+        const allowed = new Set(['image/jpeg', 'image/png', 'image/webp'])
+        if (!allowed.has(type)) return err('Review image must be a JPG, PNG or WEBP file.', 422)
+        if (!imageFile.size || imageFile.size > 5 * 1024 * 1024) {
+          return err('Review image must be 5 MB or smaller.', 422)
+        }
+        const buffer = Buffer.from(await imageFile.arrayBuffer())
+        if (!magicOk(buffer, type)) return err('The review image file is invalid.', 422)
+        const imageId = uuidv4()
+        await db.collection('images').insertOne({
+          id: imageId,
+          data: buffer,
+          contentType: type,
+          size: imageFile.size,
+          createdAt: new Date(),
+        })
+        reviewImageUrl = `/api/images/${imageId}`
+      }
 
       const now = new Date()
       const review = {
@@ -367,6 +427,7 @@ async function handleRoute(request, { params }) {
         productName: String(item.name || '').slice(0, 200),
         productSlug: String(item.slug || '').slice(0, 200),
         productImage: String(item.image || '').slice(0, 3000),
+        reviewImageUrl,
         orderId: order.id,
         orderNumber: order.orderNumber,
         userId: auth.uid,
