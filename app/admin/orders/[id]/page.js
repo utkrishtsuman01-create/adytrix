@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Loader2, Check, X, Truck, PackageCheck, BadgeCheck, RefreshCw, MapPin, Search, Send, Clock3, MessageCircle } from 'lucide-react'
+import { Loader2, Check, X, Truck, PackageCheck, BadgeCheck, RefreshCw, MapPin, Search, Send, Clock3 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -112,16 +112,6 @@ export default function AdminOrderDetail() {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentStatus: 'paid' }),
     }, 'Payment marked as paid')
     if (data) load()
-  }
-
-  const sendReviewLink = async () => {
-    const result = await api(`/api/admin/orders/${id}/review-whatsapp`, { method: 'POST' })
-    if (result?.ok) {
-      toast.success(result.whatsappReview?.status === 'already_sent' ? 'Review link was already sent.' : 'WhatsApp review request accepted for sending.')
-    } else if (result?.whatsappReview?.error) {
-      toast.error(result.whatsappReview.error)
-    }
-    load()
   }
 
   const getCouriers = async () => {
@@ -315,37 +305,6 @@ export default function AdminOrderDetail() {
             </div>
           </section>
 
-          {order.orderStatus === 'completed' && (
-            <section className="rounded-xl border border-border bg-card p-6">
-              <h2 className="flex items-center gap-2 font-display text-xl mb-3"><MessageCircle className="h-5 w-5 text-[#5f8aa1]" /> WhatsApp review link</h2>
-              {!order.whatsappReviewOptIn ? (
-                <p className="text-sm text-muted-foreground">The customer did not opt in to WhatsApp review messages at checkout, so no automatic message will be sent.</p>
-              ) : (
-                <>
-                  <p className="text-sm text-muted-foreground">
-                    {order.reviewWhatsAppSentAt
-                      ? 'WhatsApp accepted the review request for sending.'
-                      : order.reviewWhatsAppStatus === 'waiting_for_completion'
-                        ? 'The review request is ready to send.'
-                        : order.reviewWhatsAppStatus === 'not_configured'
-                          ? 'WhatsApp API credentials or the approved template are not configured yet.'
-                          : order.reviewWhatsAppStatus === 'failed'
-                            ? 'The last WhatsApp attempt failed.'
-                            : 'A review request can be sent to the customer’s checkout number.'}
-                  </p>
-                  {order.reviewWhatsAppError && <p className="mt-2 text-xs text-destructive">{order.reviewWhatsAppError}</p>}
-                  {order.reviewWhatsAppSentAt ? (
-                    <p className="mt-3 text-xs text-green-700">Sent attempt recorded: {new Date(order.reviewWhatsAppSentAt).toLocaleString('en-IN')}</p>
-                  ) : (
-                    <Button className="mt-4 w-full" onClick={sendReviewLink} disabled={!!busy}>
-                      <MessageCircle className="mr-2 h-4 w-4" />
-                      {order.reviewWhatsAppStatus === 'failed' || order.reviewWhatsAppStatus === 'not_configured' ? 'Retry WhatsApp review link' : 'Send review link on WhatsApp'}
-                    </Button>
-                  )}
-                </>
-              )}
-            </section>
-          )}
         </div>
       </div>
     </div>
