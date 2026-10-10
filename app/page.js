@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowRight, Heart, ShieldCheck, Sparkles, Truck } from 'lucide-react'
+import { ArrowRight, Heart, ShieldCheck, Sparkles, Truck, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import ProductCard from '@/components/site/product-card'
 import HeroSlider from '@/components/site/hero-slider'
@@ -7,15 +7,17 @@ import { getFeaturedProducts, getTrendingProducts, getActiveCategories } from '@
 import { getSiteConfig } from '@/lib/site-config'
 import { CRAFT1 } from '@/lib/assets'
 import { SOCIAL } from '@/lib/site'
+import { getDb } from '@/lib/mongo'
 
 export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
-  const [featured, trending, categories, site] = await Promise.all([
+  const [featured, trending, categories, site, fiveStarReviews] = await Promise.all([
     getFeaturedProducts(8),
     getTrendingProducts(8),
     getActiveCategories(),
     getSiteConfig(),
+    getFiveStarReviews(),
   ])
 
   const sections = Array.isArray(site.sections) ? site.sections.filter((s) => s.enabled !== false) : []
@@ -29,7 +31,74 @@ export default async function HomePage() {
       ))}
 
       <ContactStrip phone={site.footer?.phone} email={site.footer?.email} />
+      <FiveStarReviews reviews={fiveStarReviews} />
     </div>
+  )
+}
+
+async function getFiveStarReviews() {
+  const db = await getDb()
+  const docs = await db.collection('product_reviews')
+    .find({ rating: 5, comment: { $type: 'string', $ne: '' } })
+    .sort({ createdAt: -1 })
+    .limit(8)
+    .toArray()
+
+  return docs.map((review) => ({
+    id: review.id || String(review._id),
+    productName: review.productName || 'ADYTRIX product',
+    productSlug: review.productSlug || '',
+    customerName: String(review.customerName || 'Customer').trim().split(' ')[0],
+    rating: Number(review.rating) || 5,
+    comment: String(review.comment || ''),
+    reviewImageUrl: review.reviewImageUrl || '',
+    createdAt: review.createdAt || null,
+  }))
+}
+
+function FiveStarReviews({ reviews }) {
+  return (
+    <section className="bg-[#f4f9fb] py-16 sm:py-20">
+      <div className="container">
+        <div className="mx-auto mb-10 max-w-2xl text-center">
+          <span className="text-xs uppercase tracking-[0.3em] text-[#5f8aa1]">Customer love</span>
+          <h2 className="mt-3 font-display text-3xl sm:text-4xl">Five-star experiences</h2>
+          <p className="mt-3 text-muted-foreground">Reviews from customers who have completed their ADYTRIX orders.</p>
+        </div>
+
+        {reviews.length ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {reviews.map((review) => (
+              <article key={review.id} className="flex h-full flex-col rounded-2xl border border-[#dceaf0] bg-white p-5 shadow-sm">
+                <div className="flex items-center gap-1" aria-label="5 out of 5 stars">
+                  {[1, 2, 3, 4, 5].map((star) => <Star key={star} className="h-4 w-4 fill-amber-400 text-amber-400" />)}
+                  <span className="ml-2 text-xs font-medium text-muted-foreground">Verified order</span>
+                </div>
+                <p className="mt-4 flex-1 whitespace-pre-line leading-relaxed text-[#26343b]">“{review.comment}”</p>
+                {review.reviewImageUrl && (
+                  <a href={review.reviewImageUrl} target="_blank" rel="noopener noreferrer" className="mt-4 block overflow-hidden rounded-xl bg-[#eaf3f7]">
+                    <img src={review.reviewImageUrl} alt={`Photo shared by ${review.customerName} in their review`} loading="lazy" className="max-h-64 w-full object-contain" />
+                  </a>
+                )}
+                <div className="mt-5 border-t border-border pt-4">
+                  <p className="font-medium">{review.customerName}</p>
+                  {review.productSlug ? (
+                    <Link href={`/products/${review.productSlug}`} className="mt-1 block text-sm text-[#5f8aa1] hover:underline">{review.productName}</Link>
+                  ) : <p className="mt-1 text-sm text-muted-foreground">{review.productName}</p>}
+                  {review.createdAt && <p className="mt-2 text-xs text-muted-foreground">{new Date(review.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>}
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-[#cbdde6] bg-white px-6 py-10 text-center">
+            <div className="flex justify-center gap-1 text-amber-400">{[1, 2, 3, 4, 5].map((star) => <Star key={star} className="h-5 w-5 fill-current" />)}</div>
+            <p className="mt-3 font-medium">Your review could be featured here.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Complete an order and share your experience to help other ADYTRIX customers.</p>
+          </div>
+        )}
+      </div>
+    </section>
   )
 }
 
