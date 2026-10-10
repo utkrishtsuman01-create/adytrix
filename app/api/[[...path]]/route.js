@@ -403,8 +403,8 @@ async function handleRoute(request, { params }) {
         const type = String(imageFile.type || '').toLowerCase()
         const allowed = new Set(['image/jpeg', 'image/png', 'image/webp'])
         if (!allowed.has(type)) return err('Review image must be a JPG, PNG or WEBP file.', 422)
-        if (!imageFile.size || imageFile.size > 5 * 1024 * 1024) {
-          return err('Review image must be 5 MB or smaller.', 422)
+        if (!imageFile.size || imageFile.size > 4 * 1024 * 1024) {
+          return err('Review image must be 4 MB or smaller.', 422)
         }
         const buffer = Buffer.from(await imageFile.arrayBuffer())
         if (!magicOk(buffer, type)) return err('The review image file is invalid.', 422)
