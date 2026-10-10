@@ -141,7 +141,7 @@ export default function OrderDetailPage() {
       )}
 
       <div className="mt-6 grid md:grid-cols-3 gap-6">
-        <section className="md:col-span-2 rounded-xl border border-border bg-card p-6">
+        <section id="items" className="md:col-span-2 rounded-xl border border-border bg-card p-6">
           <h2 className="font-display text-xl mb-4">Items</h2>
           <div className="space-y-4">
             {order.items.map((it, i) => {
