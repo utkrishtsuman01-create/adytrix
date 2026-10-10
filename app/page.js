@@ -63,7 +63,7 @@ function FiveStarReviews({ reviews }) {
         <div className="mx-auto mb-10 max-w-2xl text-center">
           <span className="text-xs uppercase tracking-[0.3em] text-[#5f8aa1]">Customer love</span>
           <h2 className="mt-3 font-display text-3xl sm:text-4xl">Five-star experiences</h2>
-          <p className="mt-3 text-muted-foreground">Reviews from customers who have completed their ADYTRIX orders.</p>
+          <p className="mt-3 text-muted-foreground">Real feedback shared by ADYTRIX customers.</p>
         </div>
 
         {reviews.length ? (
@@ -72,7 +72,7 @@ function FiveStarReviews({ reviews }) {
               <article key={review.id} className="flex h-full flex-col rounded-2xl border border-[#dceaf0] bg-white p-5 shadow-sm">
                 <div className="flex items-center gap-1" aria-label="5 out of 5 stars">
                   {[1, 2, 3, 4, 5].map((star) => <Star key={star} className="h-4 w-4 fill-amber-400 text-amber-400" />)}
-                  <span className="ml-2 text-xs font-medium text-muted-foreground">Verified order</span>
+                  <span className="ml-2 text-xs font-medium text-muted-foreground">Customer review</span>
                 </div>
                 <p className="mt-4 flex-1 whitespace-pre-line leading-relaxed text-[#26343b]">“{review.comment}”</p>
                 {review.reviewImageUrl && (
