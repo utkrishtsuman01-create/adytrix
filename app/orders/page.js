@@ -43,7 +43,8 @@ export default function OrdersPage() {
       <h1 className="font-display text-3xl sm:text-4xl mb-8">My Orders</h1>
       <div className="space-y-4">
         {orders.map((o) => (
-          <Link key={o.id} href={`/orders/${o.id}`} className="block rounded-xl border border-border bg-card p-5 hover:shadow-md transition-shadow">
+          <div key={o.id} className="rounded-xl border border-border bg-card transition-shadow hover:shadow-md">
+          <Link href={`/orders/${o.id}`} className="block p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="font-medium">Order #{o.orderNumber}</p>
@@ -67,6 +68,17 @@ export default function OrdersPage() {
               </div>
             </div>
           </Link>
+          {o.orderStatus === 'completed' && (
+            <div className="border-t border-border px-5 py-3">
+              <Link
+                href={`/orders/${o.id}#items`}
+                className="inline-flex items-center gap-2 text-sm font-medium text-[#5f8aa1] hover:underline"
+              >
+                Review your items <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+          )}
+          </div>
         ))}
       </div>
     </div>
